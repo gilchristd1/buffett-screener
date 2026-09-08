@@ -47,6 +47,62 @@ jobs:
           python3 tests/test_gates.py
           python3 tests/test_screener_import.py
 
+      - name: Download SEC bulk companyfacts
+        # ~1.5GB. Expensive on a laptop, cheap on a runner, and it is what lets
+        # the universe be built from two bulk sources instead of 8,000 API calls.
+        run: python3 run_screen.py --download
+
+      - name: Build universe
+        run: python3 run_screen.py --build-universe
+
+      - name: Run gates
+        run: python3 run_screen.py --screen
+
+      - name: Write run summary
+        run: |
+          {
+            echo "# Screen run — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo
+            echo "- Universe: $(( $(wc -l < out/universe.csv) - 1 )) names"
+            echo "- Survivors: $(( $(wc -l < out/survivors.csv 2>/dev/null || echo 1) - 1 ))"
+            echo
+            echo '## Survivors'
+            echo
+            cat out/survivors.csv 2>/dev/null || echo "none"
+          } > out/summary.md
+          cat out/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit results
+        run: |
+          git config user.name "buffett-screener"
+          git config user.email "actions@github.com"
+          git add -f out/universe.csv out/results.csv out/survivors.csv out/summary.md
+          if git diff --cached --quiet; then
+            echo "No change in screen output."
+          else
+            git commit -m "Screen run $(date -u '+%Y-%m-%d')"
+            git push
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-results
+          path: out/
+          retention-days: 90
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify gate logic before trusting any output
+        run: |
+          python3 tests/test_gates.py
+          python3 tests/test_screener_import.py
+
       - name: Cache the SEC ticker map
         uses: actions/cache@v4
         with:
