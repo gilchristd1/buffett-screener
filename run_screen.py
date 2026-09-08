@@ -98,60 +98,18 @@ def universe_from_screener(path: str) -> None:
 
 def build_universe() -> None:
     """
-    Fallback when you have no screener export. Slow — it walks every SEC-registered
-    ticker through yfinance. Prefer --from-screener.
-
-    SEC XBRL carries no market data at all — no price, market cap or volume.
-    That gap has to be filled from somewhere else before valuation can run.
+    Full-universe build with no screener export. Delegates to universe.py, which
+    uses two bulk sources instead of one HTTP call per company — see that module
+    for why the naive approach cannot finish.
     """
-    try:
-        import yfinance as yf
-    except ImportError:
-        sys.exit("pip install yfinance  (SEC data has no prices; a price source is required)")
-
-    tickers = secdata.load_ticker_map()
-    print(f"{len(tickers):,} SEC-registered tickers")
-
-    OUT.mkdir(exist_ok=True)
-    rows, batch = [], list(tickers)
-    for i in range(0, len(batch), 200):
-        chunk = batch[i:i + 200]
-        print(f"  prices {i:,}/{len(batch):,}", end="\r")
-        try:
-            info = yf.Tickers(" ".join(chunk))
-        except Exception:
-            continue
-        for t in chunk:
-            try:
-                d = info.tickers[t].info
-            except Exception:
-                continue
-            mcap = d.get("marketCap")
-            if not mcap or mcap < config.MIN_MARKET_CAP:
-                continue
-            adv = (d.get("averageVolume") or 0) * (d.get("currentPrice") or 0)
-            if adv < config.MIN_AVG_DAILY_VALUE:
-                continue
-            sector = SECTOR_TO_MODULE.get(d.get("sector"))
-            if not sector:
-                continue
-            rows.append({
-                "ticker": t, "cik": tickers[t]["cik"], "name": tickers[t]["title"],
-                "market_cap": int(mcap), "adv": int(adv),
-                "yf_sector": d.get("sector"), "module": sector,
-            })
-
-    with open(OUT / "universe.csv", "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
-    print(f"\nuniverse: {len(rows):,} names -> {OUT/'universe.csv'}")
+    import universe
+    universe.build(OUT, DATA / "companyfacts.zip")
 
 
 def load_universe() -> list[dict]:
     path = OUT / "universe.csv"
     if not path.exists():
-        sys.exit("No universe.csv — run --from-screener CSV (or --build-universe) first")
+        sys.exit("No universe.csv — run --from-screener CSV (or --download then --build-universe) first")
     with open(path) as fh:
         return list(csv.DictReader(fh))
 
