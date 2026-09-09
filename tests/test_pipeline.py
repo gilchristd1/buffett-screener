@@ -27,6 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+import config  # noqa: E402
 import secdata  # noqa: E402
 import universe as U  # noqa: E402
 
@@ -126,6 +127,8 @@ def main():
         (6, "REIT Co",       "6798", ["NYSE"],                True),
         (7, "Foreign Co",    "5331", ["LSE"],                 True),   # wrong exchange
         (8, "OTC Co",        "5331", [],                      True),   # no exchange
+        (9, "Asset Mgr",     "6282", ["NYSE"],                True),   # fee business
+        (10, "Multi Class",  "5331", ["Nasdaq"],              True),   # share classes
     ]
 
     with zipfile.ZipFile(work / "data" / "companyfacts.zip", "w") as z:
@@ -134,9 +137,12 @@ def main():
     with zipfile.ZipFile(work / "data" / "submissions.zip", "w") as z:
         for cik, name, sic, exch, _ in specs:
             z.writestr(f"CIK{cik:010d}.json", json.dumps(make_submissions(cik, name, sic, exch)))
-    json.dump({str(i): {"cik_str": cik, "ticker": f"T{cik}", "title": name}
-               for i, (cik, name, _, _, _) in enumerate(specs)},
-              open(work / "data" / "company_tickers.json", "w"))
+    tickmap = {str(i): {"cik_str": cik, "ticker": f"T{cik}", "title": name}
+               for i, (cik, name, _, _, _) in enumerate(specs)}
+    # CIK 10 listed under three share classes, as Alphabet is under four.
+    for j, suffix in enumerate(("A", "B", "C"), start=100):
+        tickmap[str(j)] = {"cik_str": 10, "ticker": f"T10{suffix}", "title": "Multi Class"}
+    json.dump(tickmap, open(work / "data" / "company_tickers.json", "w"))
 
     print("\n=== companyfacts must NOT be expected to carry sector data ===")
     facts = make_companyfacts(1, "Consumer Co")
@@ -179,6 +185,11 @@ def main():
         failures += not check("REIT classified as reit", got.get("T6") == "reit", str(got))
         failures += not check("bank classified as financials", got.get("T3") == "financials")
         failures += not check("software classified as software", got.get("T2") == "software")
+        failures += not check("fee business routed off the bank track",
+                              got.get("T9") == "consumer", str(got.get("T9")))
+        failures += not check("share classes deduped to one row per company",
+                              sum(1 for r in rows if r["cik"] == "10") == 1,
+                              f"{sum(1 for r in rows if r['cik']=='10')} rows for CIK 10")
 
         print("\n=== gates run over that universe ===")
         r = subprocess.run([sys.executable, "run_screen.py", "--screen"],
@@ -189,6 +200,63 @@ def main():
     finally:
         import os
         os.chdir(cwd)
+
+    print("\n=== fix 1: C4 must not pass on unknown interest cover ===")
+    import gates as G, metrics as MM
+    lev = make_companyfacts(90, "Levered Co")
+    del lev["facts"]["us-gaap"]["InterestExpense"]          # untagged, as ~331 real ones are
+    ser = secdata.extract(lev)
+    failures += not check("interest_cover returns None, not infinity",
+                          MM.interest_cover(ser, 2025) is None)
+    g = {x.code: x for x in G.run_gates(ser, "LEV", "consumer").gates}["C4"]
+    failures += not check("C4 is unevaluable, not a pass, when net debt exists",
+                          g.passed is not True, g.reason[:90])
+
+    print("\n=== fix 2: REIT and utility gates run instead of crashing ===")
+    for sector in ("reit", "utilities"):
+        res = G.run_gates(secdata.extract(make_companyfacts(91, "X")), "X", sector)
+        g = {x.code: x for x in res.gates}["M-ROIC"]
+        failures += not check(f"{sector} M-ROIC evaluates without KeyError",
+                              not g.reason.startswith("error"), g.reason[:80])
+
+    print("\n=== a code defect must fail the run, not be logged as missing data ===")
+    broken = dict(config.SECTOR_MODULES["consumer"])
+    missing_key = {k: v for k, v in broken.items() if k != "roic_median_min"}
+    config.SECTOR_MODULES["consumer"] = missing_key   # exactly the reit/utility bug
+    try:
+        G.run_gates(secdata.extract(make_companyfacts(92, "Y")), "Y", "consumer")
+        failures += not check("broken config raises rather than silently failing", False)
+    except RuntimeError as e:
+        failures += not check("broken config raises RuntimeError", True, str(e)[:70])
+    except Exception as e:
+        failures += not check("broken config raises RuntimeError", False, f"got {type(e).__name__}")
+    finally:
+        config.SECTOR_MODULES["consumer"] = broken
+
+    print("\n=== fix 3: C7 credits capital returned, not just retained ===")
+    shrink = make_companyfacts(93, "Buyback Co")
+    for tag, direction in (("StockholdersEquity", -1), ("LongTermDebtNoncurrent", -1),
+                           ("CashAndCashEquivalentsAtCarryingValue", +1)):
+        for it in shrink["facts"]["us-gaap"][tag]["units"]["USD"]:
+            k = int(it["end"][:4]) - 2015
+            it["val"] = it["val"] * ((0.93 ** k) if direction < 0 else (1.05 ** k))
+    ser = secdata.extract(shrink)
+    ca = MM.capital_allocation(ser)
+    failures += not check("capital_allocation reports the 'returned' mode",
+                          ca is not None and ca[0] == "returned", str(ca))
+    g = {x.code: x for x in G.run_gates(ser, "BB", "consumer").gates}["C7"]
+    failures += not check("C7 is decided, not left unevaluable",
+                          g.passed is not None, g.reason[:90])
+
+    print("\n=== fix 4: financials get the 20-year loss test ===")
+    ni = {y: 100.0 for y in YEARS}; ni[2020] = -50.0
+    lossy = make_companyfacts(94, "Lossy Bank")
+    lossy["facts"]["us-gaap"]["NetIncomeLoss"] = {"units": {"USD": _annual_entries(ni, False)}}
+    g = {x.code: x for x in G.run_gates(secdata.extract(lossy), "LB", "financials").gates}["M-LOSS"]
+    failures += not check("a loss year fails M-LOSS", g.passed is False, g.reason)
+    g = {x.code: x for x in G.run_gates(
+        secdata.extract(make_companyfacts(95, "Clean Bank")), "CB", "financials").gates}["M-LOSS"]
+    failures += not check("a clean record passes M-LOSS", g.passed is True, g.reason)
 
     print(f"\n{'='*60}")
     print("ALL CHECKS PASSED" if failures == 0 else f"{failures} CHECK(S) FAILED")
