@@ -1,28 +1,30 @@
-# Screen run — 2026-09-09 22:44 UTC
+# Screen run — 2026-09-09 23:09 UTC
 
 - Universe: 2150 names
 - Survivors: 40
 
 - Ranked: 40 scored
-- Clearing the owner-earnings hurdle: 37
+- Clearing the owner-earnings hurdle: 6
+- Price-comparable (score includes the valuation points): 36 of 40
+- Moat durability: 33 wide, 7 narrow, 0 uncertain
 
 ## Ranked queue
 
-ticker,name,module,moat,score,points,priced,owner_earnings_yield,hurdle,clears_hurdle,price,buy_price,discount_to_iv,ev_ebit_vs_history_sd,market_cap
-LULU,lululemon athletica inc.,consumer,narrow,92.9,65/70,yes,0.1810,0.0800,yes,99.72,165.98,0.640,-0.73,10529840190
-TOL,"Toll Brothers, Inc.",industrials,narrow,84.3,59/70,yes,0.1230,0.0800,yes,135.05,165.67,0.511,-1.02,12444452631
-YUMC,"Yum China Holdings, Inc.",consumer,narrow,83.6,58/70,yes,0.0689,0.0800,no,42.58,29.52,0.135,-0.95,14581868057
-SFM,"Sprouts Farmers Market, Inc.",consumer,narrow,82.9,58/70,yes,0.0580,0.0800,no,73.11,45.30,0.032,-1.31,6817333920
-ADBE,ADOBE INC.,software,narrow,78.6,55/70,yes,0.0618,0.0800,no,254.86,174.05,0.121,-0.53,101306850242
-LII,LENNOX INTERNATIONAL INC,industrials,narrow,78.6,55/70,yes,0.0617,0.0800,no,375.78,256.98,0.123,-1.44,13077131932
-GL,GLOBE LIFE INC.,financials,narrow,77.3,50/64,yes,0.0704,0.0800,no,169.82,144.01,0.292,-1.77,13050573652
-LOGI,LOGITECH INTERNATIONAL S.A.,software,narrow,77.1,54/70,yes,0.0513,0.0800,no,98.69,49.22,-0.203,-0.48,14131256834
-ULTA,"Ulta Beauty, Inc.",consumer,narrow,77.1,54/70,yes,0.0528,0.0800,no,541.86,311.76,-0.043,-0.28,23168562609
-CMI,CUMMINS INC,industrials,narrow,75.7,53/70,yes,0.0406,0.0800,no,554.76,213.45,-0.559,-1.25,76370752152
-COST,COSTCO WHOLESALE CORP /NEW,consumer,narrow,70.7,50/70,yes,0.0189,0.0800,no,902.60,184.36,-1.938,-1.20,400283957663
-FIVE,"FIVE BELOW, INC",consumer,narrow,70.7,50/70,yes,0.0238,0.0800,no,247.12,60.70,-1.443,-0.80,13604952860
-GWW,"W.W. GRAINGER, INC.",industrials,narrow,67.1,47/70,yes,0.0294,0.0800,no,1278.83,402.58,-0.906,-1.33,60234095587
-HD,"HOME DEPOT, INC.",consumer,narrow,67.1,47/70,yes,0.0414,0.0800,no,310.45,144.58,-0.288,-0.31,309732756570
+ticker,name,module,moat,durability,moat_source,margin_of_safety,score,points,priced,owner_earnings_yield,hurdle,clears_hurdle,price,buy_price,discount_to_iv,ev_ebit_vs_history_sd,market_cap
+LULU,lululemon athletica inc.,consumer,wide,98.0,computed,0.30,92.9,65/70,yes,0.1810,0.0600,yes,99.72,192.53,0.640,-1.86,10529840190
+TOL,"Toll Brothers, Inc.",industrials,wide,72.0,computed,0.36,84.3,59/70,yes,0.1230,0.0450,yes,135.05,177.82,0.511,-0.16,12444452631
+YUMC,"Yum China Holdings, Inc.",consumer,wide,78.0,computed,0.34,83.6,58/70,yes,0.0689,0.0400,yes,42.58,32.28,0.135,-0.72,14581868057
+SFM,"Sprouts Farmers Market, Inc.",consumer,wide,96.0,computed,0.31,82.9,58/70,yes,0.0580,0.0600,no,73.11,52.24,0.032,-0.60,6817333920
+ADBE,ADOBE INC.,software,wide,96.0,computed,0.31,78.6,55/70,yes,0.0618,0.0600,yes,254.86,200.74,0.121,-2.35,101306850242
+LII,LENNOX INTERNATIONAL INC,industrials,wide,71.0,computed,0.36,78.6,55/70,yes,0.0617,0.0600,yes,375.78,274.97,0.123,-2.17,13077131932
+GL,GLOBE LIFE INC.,financials,narrow,47.8,computed,0.40,77.3,50/64,yes,0.0704,0.0800,no,169.82,142.96,0.292,0.04,13050573652
+LOGI,LOGITECH INTERNATIONAL S.A.,software,wide,94.0,computed,0.31,77.1,54/70,yes,0.0513,0.0600,no,98.69,56.44,-0.203,-0.37,14131256834
+ULTA,"Ulta Beauty, Inc.",consumer,wide,98.0,computed,0.30,77.1,54/70,yes,0.0528,0.0600,no,541.86,361.64,-0.043,-0.14,23168562609
+FIVE,"FIVE BELOW, INC",consumer,wide,83.0,computed,0.33,70.7,50/70,yes,0.0238,0.0400,no,247.12,67.38,-1.443,-0.04,13604952860
+CMI,CUMMINS INC,industrials,wide,89.0,computed,0.32,70.0,49/70,yes,0.0406,0.0600,no,554.76,241.20,-0.559,2.10,76370752152
+COST,COSTCO WHOLESALE CORP /NEW,consumer,wide,100.0,computed,0.30,67.9,48/70,yes,0.0189,0.0600,no,902.60,215.09,-1.938,1.18,400283957663
+HD,"HOME DEPOT, INC.",consumer,wide,81.0,computed,0.34,67.1,47/70,yes,0.0414,0.0600,no,310.45,159.52,-0.288,0.05,309732756570
+IDXX,IDEXX LABORATORIES INC /DE,healthcare,wide,76.0,computed,0.35,65.7,46/70,yes,0.0220,0.0600,no,515.15,137.30,-1.446,-0.89,40584093830
 
 ## Survivors
 
