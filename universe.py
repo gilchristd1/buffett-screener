@@ -97,17 +97,58 @@ def excluded_by_sic(sic: str | None) -> str | None:
     return None
 
 
-def build(out_dir: Path, zip_path: Path) -> int:
-    """Every SEC filer with a ticker and enough filing history. No network."""
+# Tier 1: primary listing must be a major US exchange.
+ALLOWED_EXCHANGES = {"NYSE", "NASDAQ", "NYSEAMERICAN", "NYSE AMERICAN", "AMEX", "NYSE MKT"}
+
+
+def load_company_meta(subs_zip: Path) -> dict[int, dict]:
+    """
+    cik -> {sic, sic_desc, exchanges} from the submissions bulk file.
+
+    This has to come from submissions.zip: companyfacts.json contains only
+    {cik, entityName, facts} and carries no SIC code or exchange at all.
+    """
+    meta: dict[int, dict] = {}
+    with zipfile.ZipFile(subs_zip) as z:
+        names = [n for n in z.namelist()
+                 if n.startswith("CIK") and n.endswith(".json") and "submissions" not in n]
+        print(f"  submissions file holds {len(names):,} records")
+        for n, name in enumerate(names, 1):
+            if n % 5000 == 0:
+                print(f"  reading metadata {n:,}/{len(names):,}", flush=True)
+            try:
+                d = json.loads(z.read(name))
+            except Exception:
+                continue
+            cik = d.get("cik")
+            if cik is None:
+                continue
+            meta[int(cik)] = {
+                "sic": str(d.get("sic") or ""),
+                "sic_desc": d.get("sicDescription", ""),
+                "exchanges": [str(x).upper().replace("-", "") for x in (d.get("exchanges") or [])],
+            }
+    return meta
+
+
+def build(out_dir: Path, zip_path: Path, subs_path: Path | None = None) -> int:
+    """Every SEC filer with a ticker, a US listing and enough history. No network."""
     if not zip_path.exists():
         sys.exit(f"{zip_path} not found — run --download first.")
+    subs_path = subs_path or (zip_path.parent / "submissions.zip")
+    if not subs_path.exists():
+        sys.exit(f"{subs_path} not found — run --download first.\n"
+                 "Sector and exchange come from the submissions bulk file; "
+                 "companyfacts has neither.")
 
     tickers = secdata.load_ticker_map()
     print(f"{len(tickers):,} SEC-registered tickers")
+    meta_by_cik = load_company_meta(subs_path)
+    print(f"  metadata for {len(meta_by_cik):,} companies")
 
     rows = []
-    skipped = {"no_facts": 0, "no_shares": 0, "no_sector": 0,
-               "excluded_sic": 0, "short_history": 0, "unreadable": 0}
+    skipped = {"no_facts": 0, "no_meta": 0, "no_exchange": 0, "no_shares": 0,
+               "no_sector": 0, "excluded_sic": 0, "short_history": 0, "unreadable": 0}
 
     with zipfile.ZipFile(zip_path) as z:
         names = set(z.namelist())
@@ -125,7 +166,15 @@ def build(out_dir: Path, zip_path: Path) -> int:
                 skipped["unreadable"] += 1
                 continue
 
-            sic = str(facts.get("sic") or "")
+            cmeta = meta_by_cik.get(int(meta["cik"]))
+            if not cmeta:
+                skipped["no_meta"] += 1
+                continue
+            if not any(x in ALLOWED_EXCHANGES for x in cmeta["exchanges"]):
+                skipped["no_exchange"] += 1
+                continue
+
+            sic = cmeta["sic"]
             if excluded_by_sic(sic):
                 skipped["excluded_sic"] += 1
                 continue
@@ -150,14 +199,15 @@ def build(out_dir: Path, zip_path: Path) -> int:
             rows.append({
                 "ticker": ticker, "cik": meta["cik"], "name": meta["title"],
                 "shares": int(sh) if sh else 0,
-                "sic": sic, "sic_desc": facts.get("sicDescription", ""),
+                "sic": sic, "sic_desc": cmeta["sic_desc"],
                 "module": module,
                 "market_cap": "", "adv": "",     # filled by the size filter, post-gates
             })
 
     if not rows:
-        sys.exit("Universe is empty. Check the bulk zip downloaded correctly "
-                 f"({zip_path}, {zip_path.stat().st_size:,} bytes).")
+        print("  excluded: " + ", ".join(f"{k} {v:,}" for k, v in skipped.items()))
+        sys.exit("Universe is empty — every company was excluded. The counts above "
+                 "say which test rejected them all.")
 
     out_dir.mkdir(exist_ok=True)
     with open(out_dir / "universe.csv", "w", newline="") as fh:

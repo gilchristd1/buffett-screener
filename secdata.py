@@ -23,6 +23,7 @@ import requests
 import config
 
 SEC_BULK_URL = "https://www.sec.gov/Archives/edgar/daily-index/xbrl/companyfacts.zip"
+SEC_SUBMISSIONS_URL = "https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip"
 SEC_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 SEC_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 
@@ -168,6 +169,34 @@ def download_bulk_companyfacts(dest: Path = CACHE / "companyfacts.zip") -> Path:
     return dest
 
 
+def download_bulk_submissions(dest: Path = CACHE / "submissions.zip") -> Path:
+    """
+    The submissions bulk file, which carries what companyfacts does NOT:
+    SIC code, industry description, and the exchanges a company lists on.
+
+    companyfacts.json is only {cik, entityName, facts} — there is no sector
+    information in it at all. Assuming otherwise is what produced an empty
+    universe from 10,407 perfectly good companies.
+    """
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists() and dest.stat().st_size > MIN_BULK_BYTES:
+        print(f"  cached: {dest} ({dest.stat().st_size:,} bytes)")
+        return dest
+    with requests.get(SEC_SUBMISSIONS_URL, headers=_headers(), stream=True, timeout=1800) as r:
+        r.raise_for_status()
+        with open(dest, "wb") as fh:
+            for chunk in r.iter_content(chunk_size=1 << 20):
+                fh.write(chunk)
+    size = dest.stat().st_size
+    print(f"  downloaded {size:,} bytes")
+    if size < MIN_BULK_BYTES:
+        raise SystemExit(f"submissions.zip is only {size:,} bytes — expected over "
+                         f"{MIN_BULK_BYTES:,}. Truncated, or the URL changed.")
+    with zipfile.ZipFile(dest) as z:
+        print(f"  contains {len(z.namelist()):,} records")
+    return dest
+
+
 def load_ticker_map(dest: Path = CACHE / "company_tickers.json") -> dict[str, dict]:
     """ticker -> {cik, title}"""
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -245,12 +274,34 @@ def _is_annual_period(item: dict) -> bool:
     return 350 <= days <= 380
 
 
+def _fiscal_year_of(end: str) -> int | None:
+    """
+    Fiscal year a period belongs to, from its END date.
+
+    This must NOT come from the `fy` field. In SEC companyfacts, `fy`/`fp`
+    identify the FILING that reported the fact, not the period the fact covers:
+    a 2023 10-K reports FY2023 alongside FY2022 and FY2021 comparatives, and all
+    three carry fy=2023, fp=FY. Keying on `fy` therefore collapses three years
+    into one and picks between them arbitrarily.
+
+    Convention: a period ending in the first five months is labelled the prior
+    year, so a January year-end reads as the year it mostly covers.
+    """
+    if not end or len(end) < 7:
+        return None
+    try:
+        year, month = int(end[:4]), int(end[5:7])
+    except ValueError:
+        return None
+    return year - 1 if month <= 5 else year
+
+
 def _pick_by_year(units: list[dict], instant: bool) -> dict[int, float]:
     """
     Collapse XBRL fact entries to one value per fiscal year.
 
     Only 10-K facts are used — 10-Q data would contaminate annual series.
-    Where a year appears multiple times (original filing plus restatements in
+    Where a period appears multiple times (original filing plus restatements in
     later filings), the most recently filed value wins.
     """
     best: dict[int, tuple[str, float]] = {}
@@ -261,13 +312,13 @@ def _pick_by_year(units: list[dict], instant: bool) -> dict[int, float]:
             continue
         if instant and item.get("start"):
             continue
-        fy = item.get("fy")
-        if fy is None or item.get("fp") != "FY":
+        fy = _fiscal_year_of(item.get("end", ""))
+        if fy is None:
             continue
-        filed = item.get("filed", "")
         val = item.get("val")
         if val is None:
             continue
+        filed = item.get("filed", "")
         if fy not in best or filed > best[fy][0]:
             best[fy] = (filed, float(val))
     return {fy: v for fy, (_, v) in best.items()}

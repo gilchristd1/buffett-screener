@@ -114,7 +114,7 @@ def build_universe() -> None:
     for why the naive approach cannot finish.
     """
     import universe
-    universe.build(OUT, DATA / "companyfacts.zip")
+    universe.build(OUT, DATA / "companyfacts.zip", DATA / "submissions.zip")
 
 
 def load_universe() -> list[dict]:
@@ -224,8 +224,10 @@ def main() -> None:
     a = p.parse_args()
 
     if a.download:
-        print("Downloading SEC bulk companyfacts (~1.5GB, several minutes)...")
+        print("Downloading SEC bulk companyfacts...")
         print("->", secdata.download_bulk_companyfacts())
+        print("Downloading SEC bulk submissions (sector and exchange)...")
+        print("->", secdata.download_bulk_submissions())
     if a.from_screener:
         universe_from_screener(a.from_screener)
     if a.build_universe:
