@@ -106,6 +106,13 @@ def make_submissions(cik: int, name: str, sic: str, exchanges: list[str]):
             "tickers": [f"T{cik}"]}
 
 
+def statistics_median_owner_earnings(s):
+    import statistics as st
+    import metrics as M
+    ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
+    return st.median([M.owner_earnings(s, y) for y in ys])
+
+
 def check(label, ok, detail=""):
     print(f"  [{'PASS' if ok else 'FAIL'}] {label}{(' — ' + detail) if detail else ''}")
     return ok
@@ -289,10 +296,26 @@ def main():
     failures += not check("a company with no price is scored on fewer available points",
                           no_price[2] < avail, f"{no_price[2]:.0f} vs {avail:.0f} available")
 
+    failures += not check("a fully priced company is flagged price-comparable",
+                          R.is_price_comparable(comps))
+    failures += not check("an unpriced company is NOT flagged price-comparable",
+                          not R.is_price_comparable(R.score_components(good, "consumer")))
+
     print("\n=== Tier 5: valuation ===")
     iv = R.dcf_intrinsic_value(good)
     failures += not check("DCF returns a positive intrinsic value", iv and iv > 0,
                           f"{iv:,.0f}" if iv else "None")
+    # Growth must fade, or a fast grower gets valued at a multiple no
+    # Buffett-style screen should pay. Run 3 implied ~24x owner earnings.
+    fast = secdata.extract(make_companyfacts(97, "Fast Co", growth=1.15))
+    base = statistics_median_owner_earnings(fast)
+    mult = R.dcf_intrinsic_value(fast) / base
+    failures += not check("a 15% grower is valued below 20x owner earnings",
+                          mult < 20, f"{mult:.1f}x")
+    slow = secdata.extract(make_companyfacts(98, "Slow Co", growth=1.03))
+    slow_mult = R.dcf_intrinsic_value(slow) / statistics_median_owner_earnings(slow)
+    failures += not check("faster growth still earns a higher multiple than slower",
+                          mult > slow_mult, f"{mult:.1f}x vs {slow_mult:.1f}x")
     bp_wide = R.buy_price(iv, 100e6, "wide")
     bp_unc = R.buy_price(iv, 100e6, "uncertain")
     failures += not check("a wider moat permits a higher buy price",
