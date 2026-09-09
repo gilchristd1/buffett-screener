@@ -182,7 +182,18 @@ def main():
         failures += not check("SPAC excluded by SIC", "T5" not in got)
         failures += not check("foreign-listed excluded by exchange", "T7" not in got)
         failures += not check("unlisted excluded by exchange", "T8" not in got)
-        failures += not check("REIT classified as reit", got.get("T6") == "reit", str(got))
+        # REITs and utilities are now excluded by policy (config.EXCLUDE_REITS_AND_UTILITIES),
+        # because they fund themselves by issuing equity and running negative FCF,
+        # which C1 and C2 treat as disqualifying.
+        failures += not check("REIT excluded by policy, not by defect",
+                              "T6" not in got, str(got))
+        failures += not check("the classifier still knows a REIT when the policy is off",
+                              U.sic_to_module("6798") == "reit")
+        failures += not check("exclusion states its reason",
+                              "EXCLUDE_REITS_AND_UTILITIES" in (U.excluded_by_sic("6798") or ""),
+                              U.excluded_by_sic("6798") or "")
+        failures += not check("utilities excluded on the same policy",
+                              "EXCLUDE_REITS_AND_UTILITIES" in (U.excluded_by_sic("4911") or ""))
         failures += not check("bank classified as financials", got.get("T3") == "financials")
         failures += not check("software classified as software", got.get("T2") == "software")
         failures += not check("fee business routed off the bank track",
@@ -257,6 +268,42 @@ def main():
     g = {x.code: x for x in G.run_gates(
         secdata.extract(make_companyfacts(95, "Clean Bank")), "CB", "financials").gates}["M-LOSS"]
     failures += not check("a clean record passes M-LOSS", g.passed is True, g.reason)
+
+    print("\n=== Tier 4: scoring ===")
+    import rank as R
+    good = secdata.extract(make_companyfacts(96, "Good Co"))
+    comps = R.score_components(good, "consumer", oe_yield=0.085,
+                               discount_to_iv=0.45, multiple_vs_history=-1.0)
+    score, earned, avail = R.total_score(comps)
+    failures += not check("score normalises over measurable points only",
+                          0 < score <= 100 and avail <= 70, f"{score:.1f} from {earned:.0f}/{avail:.0f}")
+    failures += not check("30 points are declared as needing a human",
+                          R.MANUAL_POINTS == 30, str(R.MANUAL_POINTS))
+    cheap = R.total_score(R.score_components(good, "consumer", oe_yield=0.085,
+                                             discount_to_iv=0.45, multiple_vs_history=-1.0))[0]
+    dear = R.total_score(R.score_components(good, "consumer", oe_yield=0.03,
+                                            discount_to_iv=-0.10, multiple_vs_history=1.5))[0]
+    failures += not check("a cheaper price scores higher than a dear one",
+                          cheap > dear, f"cheap {cheap:.1f} vs dear {dear:.1f}")
+    no_price = R.total_score(R.score_components(good, "consumer"))
+    failures += not check("a company with no price is scored on fewer available points",
+                          no_price[2] < avail, f"{no_price[2]:.0f} vs {avail:.0f} available")
+
+    print("\n=== Tier 5: valuation ===")
+    iv = R.dcf_intrinsic_value(good)
+    failures += not check("DCF returns a positive intrinsic value", iv and iv > 0,
+                          f"{iv:,.0f}" if iv else "None")
+    bp_wide = R.buy_price(iv, 100e6, "wide")
+    bp_unc = R.buy_price(iv, 100e6, "uncertain")
+    failures += not check("a wider moat permits a higher buy price",
+                          bp_wide > bp_unc, f"wide {bp_wide:.2f} vs uncertain {bp_unc:.2f}")
+    failures += not check("wide moat applies exactly the 30% margin of safety",
+                          abs(bp_wide - (iv / 100e6) * 0.70) < 1e-6)
+    failures += not check("unknown moat defaults to the harshest 50% haircut",
+                          abs(R.buy_price(iv, 100e6, "not-a-moat") - (iv / 100e6) * 0.50) < 1e-6)
+    y = R.owner_earnings_yield(good, 1_000.0)
+    failures += not check("owner-earnings yield is computable from a market cap",
+                          y is not None and y > 0, f"{y:.1%}" if y else "None")
 
     print(f"\n{'='*60}")
     print("ALL CHECKS PASSED" if failures == 0 else f"{failures} CHECK(S) FAILED")
