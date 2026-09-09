@@ -155,7 +155,13 @@ jobs:
         run: |
           git config user.name "buffett-screener"
           git config user.email "actions@github.com"
-          git add -f out/universe.csv out/results.csv out/survivors.csv out/summary.md
+          # One `git add` per file. A single call listing several paths fails
+          # ATOMICALLY when any one is missing — "pathspec did not match" — and
+          # then adds none of them. That is why ranked.csv never reached the repo
+          # in run 3 even though it was written.
+          for f in universe.csv results.csv survivors.csv summary.md ranked.csv watchlist.csv; do
+            [ -f "out/$f" ] && git add -f "out/$f" || echo "  (no out/$f this run)"
+          done
           if git diff --cached --quiet; then
             echo "No change in screen output."
           else
