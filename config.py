@@ -243,8 +243,33 @@ REINVEST_HIGH_SHARE = 0.50     # >50% of earnings redeployed
 REINVEST_LOW_SHARE = 0.25      # <25% redeployed
 REINVEST_HIGH_MIN_ROIC = 0.20  # ...at >=20% incremental ROIC
 
-# Margin of safety by moat classification (§7 Lens B)
+# Margin of safety by moat classification (§7 Lens B).
+# Retained for the manual override path only — moats.csv now overrides the
+# computed score rather than being the only source of it. See moat.py.
 MARGIN_OF_SAFETY = {"wide": 0.30, "narrow": 0.40, "uncertain": 0.50}
+
+# --- Computed moat durability (moat.py) -----------------------------------
+# The margin of safety is now a continuous function of the durability score
+# rather than three buckets, so a name near a boundary does not jump ten
+# percentage points of required discount on a noisy measurement.
+#
+# Calibration note: a score of 50 lands exactly on 0.40, the old "narrow"
+# default that every unlisted company received. So the change moves genuinely
+# durable businesses down toward 0.30 and fragile ones up toward 0.50, without
+# silently re-pricing the middle of the distribution.
+MOS_AT_FULL_DURABILITY = 0.30    # score 100
+MOS_AT_ZERO_DURABILITY = 0.50    # score 0
+
+# Labels are descriptive only — the score drives the price. These are also the
+# thresholds the hurdle's quality credit tests.
+DURABILITY_WIDE_MIN = 70
+DURABILITY_NARROW_MIN = 40
+
+# Below this many points of the 100 actually measurable, the score is not
+# trusted: the label falls to "uncertain", the quality credit is withheld, and
+# the margin of safety blends back toward the widest setting. Not knowing much
+# about a business is a reason to demand a bigger discount, not a neutral fact.
+DURABILITY_MIN_COVERAGE = 50
 
 # Lens C veto
 LENS_C_MAX_STDEV_ABOVE_MEDIAN = 1.0
