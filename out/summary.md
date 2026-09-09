@@ -1,28 +1,28 @@
-# Screen run — 2026-09-09 22:22 UTC
+# Screen run — 2026-09-09 22:44 UTC
 
 - Universe: 2150 names
 - Survivors: 40
 
 - Ranked: 40 scored
-- Clearing the owner-earnings hurdle: 2
+- Clearing the owner-earnings hurdle: 37
 
 ## Ranked queue
 
-ticker,name,module,moat,score,points,owner_earnings_yield,hurdle,clears_hurdle,price,buy_price,discount_to_iv,ev_ebit_vs_history_sd,market_cap
-LULU,lululemon athletica inc.,consumer,narrow,92.9,65/70,0.1810,0.0800,yes,99.72,212.36,0.718,-0.73,10529840190
-YUMC,"Yum China Holdings, Inc.",consumer,narrow,88.6,62/70,0.0689,0.0800,no,42.58,37.77,0.324,-0.95,14581868057
-SFM,"Sprouts Farmers Market, Inc.",consumer,narrow,85.7,60/70,0.0580,0.0800,no,73.11,57.96,0.243,-1.31,6817333920
-TOL,"Toll Brothers, Inc.",industrials,narrow,84.3,59/70,0.1230,0.0800,yes,135.05,211.98,0.618,-1.02,12444452631
-ADBE,ADOBE INC.,software,narrow,83.6,58/70,0.0618,0.0800,no,254.86,222.70,0.313,-0.53,101306850242
-LII,LENNOX INTERNATIONAL INC,industrials,narrow,83.6,58/70,0.0617,0.0800,no,375.78,328.80,0.314,-1.44,13077131932
-GL,GLOBE LIFE INC.,financials,narrow,82.0,52/64,0.0704,0.0800,no,169.82,173.55,0.413,-1.77,13050573652
-GOOG,Alphabet Inc.,software,narrow,79.0,40/50,,,,,,,,
-LOGI,LOGITECH INTERNATIONAL S.A.,software,narrow,78.6,55/70,0.0513,0.0800,no,98.69,62.98,0.060,-0.48,14131256834
-ULTA,"Ulta Beauty, Inc.",consumer,narrow,78.6,55/70,0.0528,0.0800,no,541.86,398.90,0.185,-0.28,23168562609
-CMI,CUMMINS INC,industrials,narrow,75.7,53/70,0.0406,0.0800,no,554.76,248.96,-0.337,-1.25,76370752152
-DKS,"DICK'S SPORTING GOODS, INC.",consumer,narrow,72.0,36/50,,,,,,,,
-WTS,WATTS WATER TECHNOLOGIES INC,industrials,narrow,71.0,36/50,,,,,,,,
-COST,COSTCO WHOLESALE CORP /NEW,consumer,narrow,70.7,50/70,0.0189,0.0800,no,902.60,235.89,-1.296,-1.20,400283957663
+ticker,name,module,moat,score,points,priced,owner_earnings_yield,hurdle,clears_hurdle,price,buy_price,discount_to_iv,ev_ebit_vs_history_sd,market_cap
+LULU,lululemon athletica inc.,consumer,narrow,92.9,65/70,yes,0.1810,0.0800,yes,99.72,165.98,0.640,-0.73,10529840190
+TOL,"Toll Brothers, Inc.",industrials,narrow,84.3,59/70,yes,0.1230,0.0800,yes,135.05,165.67,0.511,-1.02,12444452631
+YUMC,"Yum China Holdings, Inc.",consumer,narrow,83.6,58/70,yes,0.0689,0.0800,no,42.58,29.52,0.135,-0.95,14581868057
+SFM,"Sprouts Farmers Market, Inc.",consumer,narrow,82.9,58/70,yes,0.0580,0.0800,no,73.11,45.30,0.032,-1.31,6817333920
+ADBE,ADOBE INC.,software,narrow,78.6,55/70,yes,0.0618,0.0800,no,254.86,174.05,0.121,-0.53,101306850242
+LII,LENNOX INTERNATIONAL INC,industrials,narrow,78.6,55/70,yes,0.0617,0.0800,no,375.78,256.98,0.123,-1.44,13077131932
+GL,GLOBE LIFE INC.,financials,narrow,77.3,50/64,yes,0.0704,0.0800,no,169.82,144.01,0.292,-1.77,13050573652
+LOGI,LOGITECH INTERNATIONAL S.A.,software,narrow,77.1,54/70,yes,0.0513,0.0800,no,98.69,49.22,-0.203,-0.48,14131256834
+ULTA,"Ulta Beauty, Inc.",consumer,narrow,77.1,54/70,yes,0.0528,0.0800,no,541.86,311.76,-0.043,-0.28,23168562609
+CMI,CUMMINS INC,industrials,narrow,75.7,53/70,yes,0.0406,0.0800,no,554.76,213.45,-0.559,-1.25,76370752152
+COST,COSTCO WHOLESALE CORP /NEW,consumer,narrow,70.7,50/70,yes,0.0189,0.0800,no,902.60,184.36,-1.938,-1.20,400283957663
+FIVE,"FIVE BELOW, INC",consumer,narrow,70.7,50/70,yes,0.0238,0.0800,no,247.12,60.70,-1.443,-0.80,13604952860
+GWW,"W.W. GRAINGER, INC.",industrials,narrow,67.1,47/70,yes,0.0294,0.0800,no,1278.83,402.58,-0.906,-1.33,60234095587
+HD,"HOME DEPOT, INC.",consumer,narrow,67.1,47/70,yes,0.0414,0.0800,no,310.45,144.58,-0.288,-0.31,309732756570
 
 ## Survivors
 
