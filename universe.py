@@ -61,7 +61,12 @@ def shares_outstanding(facts: dict) -> float | None:
 # take the OPERATING-COMPANY gates, not the bank-and-insurer ROE track — their
 # balance sheet is not the product. Seven of the ten financial survivors in the
 # first run were on the wrong track because this routing did not exist.
-FEE_BUSINESS_SIC = set(range(6200, 6300)) | {6199, 6282, 6289, 7320}
+FEE_BUSINESS_SIC = (set(range(6200, 6300))          # brokers, dealers, exchanges, advisers
+                    | set(range(6410, 6412))        # insurance agents and brokers
+                    | {6199, 6282, 6289, 7320})
+# 6411 was missed first time round, leaving Aon, Marsh, AJ Gallagher, Brown &
+# Brown, Willis and five peers on the bank-and-insurer ROE track. A broker earns
+# commission; its balance sheet is not the product.
 
 
 def sic_to_module(sic: str | None) -> str | None:
@@ -110,7 +115,11 @@ def sic_to_module(sic: str | None) -> str | None:
             or 2000 <= n <= 2199          # food, beverage, tobacco
             or 2200 <= n <= 2399          # textiles and apparel
             or 2840 <= n <= 2844          # soap, cosmetics, household products
-            or 3021 <= n <= 3021 or n == 3140 or n == 3711  # footwear, motor vehicles
+            or n == 3021 or n == 3140     # footwear
+            # NOT 3711 (motor vehicles): added in error thinking of carmakers as
+            # consumer discretionary. It caught Federal Signal, a specialty
+            # vehicle maker, which then failed consumer's 30% gross-profitability
+            # floor at 27.8%. Vehicle manufacture is capital-intensive industry.
             or 5800 <= n <= 5899          # restaurants
             or n == 7011):                # hotels
         return "consumer"
@@ -131,6 +140,19 @@ def excluded_by_sic(sic: str | None) -> str | None:
     if not sic or not str(sic).isdigit():
         return None
     n = int(sic)
+    # REITs and regulated utilities are excluded by policy, not by defect.
+    # Both fund themselves by issuing equity and running negative free cash
+    # flow, so C1 (FCF/NI >= 0.80) and C2 (no dilution) are structurally
+    # incompatible with their business models — run 2 confirmed it: of the
+    # 57 that cleared their own module gates, 48 died on C1 or C2.
+    # Buffett owns utilities through Berkshire Hathaway Energy precisely
+    # because permanent capital removes the need to issue equity to public
+    # shareholders. A minority holder has no such protection.
+    if config.EXCLUDE_REITS_AND_UTILITIES:
+        if 6500 <= n <= 6599 or n == 6798:
+            return "REIT — see config.EXCLUDE_REITS_AND_UTILITIES"
+        if 4900 <= n <= 4949:
+            return "regulated utility — see config.EXCLUDE_REITS_AND_UTILITIES"
     if n == 2836 or n == 8731:
         return "clinical-stage biotech / research"
     if n == 6770:

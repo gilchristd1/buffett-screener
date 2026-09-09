@@ -101,6 +101,109 @@ def universe_from_screener(path: str) -> None:
     print(f"universe: {len(out):,} names -> {OUT/'universe.csv'}")
 
 
+def rank() -> None:
+    """
+    Tier 4 + Tier 5: score the survivors, value them, and write the ranked queue.
+
+    Runs after --size-filter, because the valuation lenses need a market cap.
+    Produces out/ranked.csv — the research queue, ordered — and out/watchlist.csv
+    for names that clear on quality but not yet on price.
+    """
+    import zipfile
+    import metrics as M
+    import rank as R
+
+    src = OUT / "survivors.csv"
+    if not src.exists():
+        sys.exit("No survivors.csv — run --screen first.")
+    with open(src) as fh:
+        survivors = list(csv.DictReader(fh))
+    if not survivors:
+        sys.exit("survivors.csv is empty — nothing to rank.")
+
+    moats = R.load_moat_classifications(Path("moats.csv"))
+    if not moats:
+        print("  no moats.csv — every company treated as 'narrow', so none receives")
+        print("  the quality credit on the hurdle or the 30% margin of safety.")
+
+    zip_path = DATA / "companyfacts.zip"
+    zf = zipfile.ZipFile(zip_path) if zip_path.exists() else None
+    universe = {r["ticker"]: r for r in load_universe()}
+
+    rows, watch = [], []
+    for r in survivors:
+        t_ = r["ticker"]
+        facts = _facts_for(int(universe[t_]["cik"]), zf) if t_ in universe else None
+        if not facts:
+            continue
+        s = secdata.extract(facts)
+        module = r.get("module", "")
+        mcap = float(r["market_cap"]) if r.get("market_cap") else None
+        shares = float(r["shares"]) if r.get("shares") else None
+        moat = moats.get(t_, "narrow")
+
+        oey = R.owner_earnings_yield(s, mcap) if mcap else None
+        iv = R.dcf_intrinsic_value(s)
+        mvh = R.multiple_vs_history(s, mcap) if mcap else None
+        bp = R.buy_price(iv, shares, moat) if (iv and shares) else None
+        price = (mcap / shares) if (mcap and shares) else None
+        disc = (1 - price / (iv / shares)) if (iv and shares and price) else None
+
+        comps = R.score_components(s, module, oey, disc, mvh)
+        score, earned, avail = R.total_score(comps)
+
+        # §7 Lens A: the hurdle this company's owner-earnings yield must clear,
+        # which falls as quality and reinvestment runway rise.
+        hurdle = None
+        if oey is not None:
+            import statistics as st
+            cap_rnd = config.SECTOR_MODULES.get(module, {}).get("capitalise_rnd", False)
+            rs = [x for x in (M.roic(s, y, cap_rnd)
+                              for y in M.common_years(s, ["operating_income", "total_equity"], 10))
+                  if x is not None]
+            hurdle = M.required_owner_earnings_yield(
+                st.median(rs) if rs else None, M.classify_reinvestment(s), moat)
+
+        row = {
+            "ticker": t_, "name": r["name"], "module": module, "moat": moat,
+            "score": round(score, 1), "points": f"{earned:.0f}/{avail:.0f}",
+            "owner_earnings_yield": f"{oey:.4f}" if oey is not None else "",
+            "hurdle": f"{hurdle:.4f}" if hurdle is not None else "",
+            "clears_hurdle": ("yes" if (oey is not None and hurdle is not None and oey >= hurdle)
+                              else "no" if oey is not None else ""),
+            "price": f"{price:.2f}" if price else "",
+            "buy_price": f"{bp:.2f}" if bp else "",
+            "discount_to_iv": f"{disc:.3f}" if disc is not None else "",
+            "ev_ebit_vs_history_sd": f"{mvh:.2f}" if mvh is not None else "",
+            "market_cap": r.get("market_cap", ""),
+        }
+        rows.append(row)
+        if bp and price and price > bp:
+            watch.append(row)
+
+    rows.sort(key=lambda x: -x["score"])
+    OUT.mkdir(exist_ok=True)
+    with open(OUT / "ranked.csv", "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader(); w.writerows(rows)
+    if watch:
+        with open(OUT / "watchlist.csv", "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(watch[0]))
+            w.writeheader(); w.writerows(watch)
+
+    buyable = [r for r in rows if r["clears_hurdle"] == "yes"]
+    print(f"\nranked {len(rows)} survivors -> {OUT/'ranked.csv'}")
+    print(f"  clearing the owner-earnings hurdle today: {len(buyable)}")
+    print(f"  on the watchlist (quality yes, price no):  {len(watch)}")
+    print(f"\n  {'rank':<5}{'ticker':<8}{'score':>6}  {'pts':<8}{'yield':>7}{'hurdle':>8}  name")
+    for i, r in enumerate(rows[:12], 1):
+        y = f"{float(r['owner_earnings_yield']):.1%}" if r["owner_earnings_yield"] else "  -"
+        h = f"{float(r['hurdle']):.1%}" if r["hurdle"] else "  -"
+        print(f"  {i:<5}{r['ticker']:<8}{r['score']:>6.1f}  {r['points']:<8}{y:>7}{h:>8}  {r['name'][:34]}")
+    print(f"\n  {R.MANUAL_POINTS} of 100 points need a human: "
+          + ", ".join(R.MANUAL_COMPONENTS))
+
+
 def size_filter() -> None:
     """Apply market cap and liquidity to the gated survivors (see universe.py)."""
     import universe
@@ -220,6 +323,8 @@ def main() -> None:
     p.add_argument("--screen", action="store_true")
     p.add_argument("--size-filter", action="store_true",
                    help="apply market cap and liquidity to the gated survivors")
+    p.add_argument("--rank", action="store_true",
+                   help="score and value the survivors (Tiers 4 and 5)")
     p.add_argument("--explain", metavar="TICKER")
     a = p.parse_args()
 
@@ -236,10 +341,12 @@ def main() -> None:
         screen()
     if a.size_filter:
         size_filter()
+    if a.rank:
+        rank()
     if a.explain:
         explain(a.explain)
     if not any([a.download, a.from_screener, a.build_universe, a.screen,
-                a.size_filter, a.explain]):
+                a.size_filter, a.rank, a.explain]):
         p.print_help()
 
 

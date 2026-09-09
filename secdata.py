@@ -86,9 +86,17 @@ TAG_MAP: dict[str, list[str]] = {
         "ResearchAndDevelopmentExpense",
     ],
     "interest_expense": [
+        # Coverage matters more here than anywhere else: a missing tag used to
+        # make C4 pass on infinite cover, and now makes it unevaluable. 151
+        # companies were stuck on this in run 2, C.H. Robinson among them.
         "InterestExpense",
         "InterestExpenseDebt",
         "InterestExpenseNonoperating",
+        "InterestExpenseOperating",
+        "InterestAndDebtExpense",
+        "InterestIncomeExpenseNet",
+        "InterestExpenseBorrowings",
+        "InterestPaidNet",
     ],
     # --- balance sheet (instant) ---
     "total_assets": ["Assets"],

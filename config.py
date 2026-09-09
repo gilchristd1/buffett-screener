@@ -53,6 +53,19 @@ EXCLUDED_SIC_PREFIXES = {
     "6770",  # blank checks / SPACs
 }
 
+# REITs and regulated utilities: excluded by policy (decision of 9 Sep 2026).
+# They finance themselves through equity issuance and negative free cash flow,
+# which C1 and C2 treat as disqualifying — correctly, for a minority holder.
+# Set False to bring them back, and expect them to fail C1/C2 rather than pass.
+EXCLUDE_REITS_AND_UTILITIES = True
+
+# ------------------------------------------------------- position sizing --
+# §10: weight by margin of safety, not equally. Size follows conviction and
+# price. The cap stops one deep-discount name dominating the sleeve.
+MAX_POSITION_SHARE_OF_SLEEVE = 0.35
+MIN_POSITION_SHARE_OF_SLEEVE = 0.10
+TARGET_HOLDINGS = (3, 5)
+
 # ------------------------------------------------------------- core gates --
 # C1 cash conversion
 C1_MIN_FCF_TO_NI = 0.80

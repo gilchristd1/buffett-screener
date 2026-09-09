@@ -1,0 +1,255 @@
+"""
+Tier 4 (score) and Tier 5 (valuation) — turning a pass/fail list into a decision.
+
+Both tiers were specified in screening-criteria.md from v0.1 and neither existed
+in code until now, which is why runs 1 and 2 produced 54 and 41 survivors with
+no ordering and no buy prices.
+
+An honest note on the score. §6 allocates 100 points across five categories, but
+30 of those points rest on things XBRL simply does not carry — market share,
+recurring-revenue mix, customer concentration, insider ownership, acquisition
+track record, debt maturity profile. Rather than quietly award or withhold them,
+each component reports the points it earned AND the points it was eligible for,
+and the score is normalised over what could actually be measured. Every company
+is scored on the same 70 available points, and the 30 manual points are listed
+against each name so you know what the machine has not looked at.
+"""
+
+from __future__ import annotations
+
+import csv
+import statistics
+from pathlib import Path
+
+import config
+import metrics as M
+import secdata
+
+# Components that need a human. Listed against every score so the gap is visible.
+MANUAL_COMPONENTS = {
+    "market position / switching costs": 6,
+    "acquisition track record": 3,
+    "insider ownership and comp alignment": 3,
+    "debt maturity profile": 4,
+    "off-balance-sheet obligations": 5,
+    "recurring or contracted revenue share": 5,
+    "customer and geographic concentration": 4,
+}
+MANUAL_POINTS = sum(MANUAL_COMPONENTS.values())      # 30
+
+
+def _band(value, thresholds, points):
+    """Award `points[i]` for the first threshold the value clears."""
+    if value is None:
+        return None
+    for t, p in zip(thresholds, points):
+        if value >= t:
+            return p
+    return 0.0
+
+
+# ------------------------------------------------------------ components --
+def score_components(s: secdata.AnnualSeries, sector: str,
+                     oe_yield: float | None = None,
+                     discount_to_iv: float | None = None,
+                     multiple_vs_history: float | None = None) -> list[tuple]:
+    """
+    Returns [(name, earned, available, note), ...].
+
+    `available` is 0 where the input is missing, so a company is never punished
+    in the normalised score for a tag gap — it is scored on what is knowable
+    about it, and the coverage is reported alongside.
+    """
+    out = []
+    mod = config.SECTOR_MODULES.get(sector, {})
+    cap_rnd = mod.get("capitalise_rnd", False)
+
+    # --- business quality and moat (24 of 30 measurable) ---
+    ys = M.common_years(s, ["operating_income", "total_equity"], 10)
+    roics = [r for r in (M.roic(s, y, cap_rnd) for y in ys) if r is not None]
+    if roics:
+        med = statistics.median(roics)
+        spread = med - config.REQUIRED_RETURN
+        pts = _band(spread, [0.20, 0.15, 0.10, 0.05, 0.0], [10, 8, 6, 4, 2])
+        out.append(("ROIC spread over required return", pts, 10,
+                    f"median ROIC {med:.1%}, {spread:+.1%} vs {config.REQUIRED_RETURN:.0%}"))
+    else:
+        out.append(("ROIC spread over required return", 0, 0, "no ROIC history"))
+
+    cv = M.margin_stability(s)
+    if cv is not None:
+        pts = _band(-cv, [-0.02, -0.04, -0.06, -0.10], [8, 6, 4, 2])
+        out.append(("Operating margin stability", pts, 8, f"std dev {cv:.1%}"))
+    else:
+        out.append(("Operating margin stability", 0, 0, "margin history unavailable"))
+
+    worst = M.worst_earnings_decline(s)
+    if worst is not None:
+        pts = _band(-worst, [-0.05, -0.15, -0.30, -0.50], [6, 4.5, 3, 1.5])
+        out.append(("Resilience through the worst year", pts, 6,
+                    f"worst annual earnings decline {worst:.0%}"))
+    else:
+        out.append(("Resilience through the worst year", 0, 0, "earnings history unavailable"))
+
+    # --- capital allocation (14 of 20 measurable) ---
+    ca = M.capital_allocation(s)
+    if ca:
+        mode, value = ca
+        if mode == "retained":
+            pts = _band(value, [0.25, 0.18, 0.13, 0.10], [8, 6.5, 5, 3])
+            note = f"incremental ROIC {value:.1%} on retained capital"
+        else:
+            pts = _band(value, [0.15, 0.10, 0.07, 0.05], [8, 6.5, 5, 3])
+            note = f"owner earnings/share CAGR {value:.1%} while returning capital"
+        out.append(("Return on capital deployed", pts, 8, note))
+    else:
+        out.append(("Return on capital deployed", 0, 0, "not computable"))
+
+    ratio = M.share_count_ratio(s)
+    if ratio is not None:
+        pts = _band(-ratio, [-0.90, -0.95, -1.00, -1.02], [6, 4.5, 3, 1.5])
+        out.append(("Share count discipline", pts, 6, f"{ratio:.3f}x vs 5 years ago"))
+    else:
+        out.append(("Share count discipline", 0, 0, "share history unavailable"))
+
+    # --- financial strength (6 of 15 measurable) ---
+    band = config.LEVERAGE_BANDS.get(sector)
+    if band and band[0] and ys:
+        fy = ys[-1]
+        e, nd = M.ebitda(s, fy), M.net_debt(s, fy)
+        if e and e > 0 and nd is not None:
+            lev = nd / e
+            head = band[0] - lev
+            pts = _band(head, [band[0], band[0] * 0.6, band[0] * 0.3, 0.0], [6, 4.5, 3, 1.5])
+            out.append(("Leverage headroom", pts, 6,
+                        f"net debt/EBITDA {lev:.2f}x vs {band[0]}x limit"))
+        else:
+            out.append(("Leverage headroom", 0, 0, "leverage not computable"))
+    else:
+        out.append(("Leverage headroom", 0, 0, "sector uses capital ratios"))
+
+    # --- predictability (6 of 15 measurable) ---
+    if cv is not None:
+        pts = _band(-cv, [-0.015, -0.03, -0.05, -0.08], [6, 4.5, 3, 1.5])
+        out.append(("Earnings predictability", pts, 6, f"margin CoV proxy {cv:.1%}"))
+    else:
+        out.append(("Earnings predictability", 0, 0, "not computable"))
+
+    # --- valuation (20 of 20 measurable, once a price exists) ---
+    if oe_yield is not None:
+        pts = _band(oe_yield, [0.08, 0.065, 0.05, 0.04], [10, 8, 5, 2])
+        out.append(("Owner-earnings yield", pts, 10, f"{oe_yield:.1%} of enterprise value"))
+    else:
+        out.append(("Owner-earnings yield", 0, 0, "no price"))
+
+    if discount_to_iv is not None:
+        pts = _band(discount_to_iv, [0.40, 0.30, 0.20, 0.0], [6, 4.5, 3, 1])
+        out.append(("Discount to intrinsic value", pts, 6, f"{discount_to_iv:.0%} below DCF"))
+    else:
+        out.append(("Discount to intrinsic value", 0, 0, "no DCF"))
+
+    if multiple_vs_history is not None:
+        pts = _band(-multiple_vs_history, [-0.80, -1.00, -1.20, -1.50], [4, 3, 2, 1])
+        out.append(("Multiple vs own 10-year history", pts, 4,
+                    f"{multiple_vs_history:+.2f} std dev from median EV/EBIT"))
+    else:
+        out.append(("Multiple vs own 10-year history", 0, 0, "no history"))
+
+    return out
+
+
+def total_score(components: list[tuple]) -> tuple[float, float, float]:
+    """(normalised score out of 100, points earned, points available)."""
+    earned = sum(c[1] for c in components)
+    available = sum(c[2] for c in components)
+    return (100.0 * earned / available if available else 0.0), earned, available
+
+
+# ------------------------------------------------------------ valuation --
+def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float) -> float | None:
+    """Lens A: normalised owner earnings over enterprise value."""
+    ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
+    if not ys or not market_cap:
+        return None
+    oes = [M.owner_earnings(s, y) for y in ys]
+    oes = [o for o in oes if o is not None]
+    if not oes:
+        return None
+    oe = statistics.median(oes)          # normalised, not the latest year
+    ev = M.enterprise_value(market_cap, s, ys[-1])
+    return oe / ev if ev and ev > 0 else None
+
+
+def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
+    """
+    Lens B: two-stage DCF on owner earnings.
+
+    Growth capped at the lower of the 10-year historical CAGR and 10%; terminal
+    growth capped at 2.5%; discounted at the required return. Deliberately
+    conservative — this sets a buy price, not a target price.
+    """
+    ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 11)
+    if len(ys) < 5:
+        return None
+    oes = {y: M.owner_earnings(s, y) for y in ys}
+    oes = {y: v for y, v in oes.items() if v is not None and v > 0}
+    if len(oes) < 5:
+        return None
+    base = statistics.median(list(oes.values())[-3:])
+    first, last = min(oes), max(oes)
+    hist = M.cagr(oes[first], oes[last], last - first) or 0.0
+    g = max(0.0, min(hist, 0.10))
+    r, tg = config.REQUIRED_RETURN, config.TERMINAL_GROWTH_MAX
+
+    pv, cash = 0.0, base
+    for yr in range(1, 11):
+        cash *= (1 + g)
+        pv += cash / ((1 + r) ** yr)
+    terminal = cash * (1 + tg) / (r - tg)
+    pv += terminal / ((1 + r) ** 10)
+    return pv
+
+
+def multiple_vs_history(s: secdata.AnnualSeries, market_cap: float) -> float | None:
+    """
+    Lens C: today's EV/EBIT in standard deviations from its own 10-year median.
+
+    Only today's EV is known, so history is approximated by holding enterprise
+    value constant and varying EBIT. It answers "is this expensive against its
+    own earnings record", which is the veto the criteria document asks for.
+    """
+    ys = M.common_years(s, ["operating_income"], 10)
+    if len(ys) < 5 or not market_cap:
+        return None
+    ev = M.enterprise_value(market_cap, s, ys[-1])
+    if not ev or ev <= 0:
+        return None
+    mult = [ev / s.series("operating_income")[y]
+            for y in ys if s.series("operating_income")[y] > 0]
+    if len(mult) < 5:
+        return None
+    med, sd = statistics.median(mult), statistics.pstdev(mult)
+    return (mult[-1] - med) / sd if sd > 0 else 0.0
+
+
+def buy_price(intrinsic: float | None, shares: float, moat: str) -> float | None:
+    """Intrinsic value per share, less the margin of safety §7 requires."""
+    if not intrinsic or not shares:
+        return None
+    mos = config.MARGIN_OF_SAFETY.get(moat, config.MARGIN_OF_SAFETY["uncertain"])
+    return (intrinsic / shares) * (1 - mos)
+
+
+def load_moat_classifications(path: Path) -> dict[str, str]:
+    """
+    ticker -> wide | narrow | uncertain, from a file you maintain by hand.
+
+    Moat width cannot be computed, and it drives both the valuation hurdle's
+    quality credit and the required margin of safety. Anything unlisted defaults
+    to `narrow`, so an unreviewed company never receives the quality discount.
+    """
+    if not path.exists():
+        return {}
+    with open(path) as fh:
+        return {r["ticker"].upper(): r["moat"].strip().lower()
+                for r in csv.DictReader(fh) if r.get("ticker")}
