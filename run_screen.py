@@ -151,6 +151,7 @@ def rank() -> None:
 
         comps = R.score_components(s, module, oey, disc, mvh)
         score, earned, avail = R.total_score(comps)
+        priced = R.is_price_comparable(comps)
 
         # §7 Lens A: the hurdle this company's owner-earnings yield must clear,
         # which falls as quality and reinvestment runway rise.
@@ -167,6 +168,7 @@ def rank() -> None:
         row = {
             "ticker": t_, "name": r["name"], "module": module, "moat": moat,
             "score": round(score, 1), "points": f"{earned:.0f}/{avail:.0f}",
+            "priced": "yes" if priced else "NO — score omits all 20 valuation points",
             "owner_earnings_yield": f"{oey:.4f}" if oey is not None else "",
             "hurdle": f"{hurdle:.4f}" if hurdle is not None else "",
             "clears_hurdle": ("yes" if (oey is not None and hurdle is not None and oey >= hurdle)
@@ -181,7 +183,9 @@ def rank() -> None:
         if bp and price and price > bp:
             watch.append(row)
 
-    rows.sort(key=lambda x: -x["score"])
+    # Priced names first. A score computed without the valuation components is a
+    # different measurement, not a lower one, so the two must not interleave.
+    rows.sort(key=lambda x: (x["priced"] != "yes", -x["score"]))
     OUT.mkdir(exist_ok=True)
     with open(OUT / "ranked.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))
@@ -195,11 +199,19 @@ def rank() -> None:
     print(f"\nranked {len(rows)} survivors -> {OUT/'ranked.csv'}")
     print(f"  clearing the owner-earnings hurdle today: {len(buyable)}")
     print(f"  on the watchlist (quality yes, price no):  {len(watch)}")
+    full = [r for r in rows if r["priced"] == "yes"]
+    partial = [r for r in rows if r["priced"] != "yes"]
     print(f"\n  {'rank':<5}{'ticker':<8}{'score':>6}  {'pts':<8}{'yield':>7}{'hurdle':>8}  name")
-    for i, r in enumerate(rows[:12], 1):
+    for i, r in enumerate(full[:15], 1):
         y = f"{float(r['owner_earnings_yield']):.1%}" if r["owner_earnings_yield"] else "  -"
         h = f"{float(r['hurdle']):.1%}" if r["hurdle"] else "  -"
-        print(f"  {i:<5}{r['ticker']:<8}{r['score']:>6.1f}  {r['points']:<8}{y:>7}{h:>8}  {r['name'][:34]}")
+        flag = " *" if r["clears_hurdle"] == "yes" else "  "
+        print(f"  {i:<5}{r['ticker']:<8}{r['score']:>6.1f}  {r['points']:<8}{y:>7}{h:>8}{flag}{r['name'][:32]}")
+    if partial:
+        print(f"\n  NOT price-comparable — no market cap, so all 20 valuation points are absent:")
+        for r in partial:
+            print(f"        {r['ticker']:<8}{r['score']:>6.1f}  {r['points']:<8}  {r['name'][:40]}")
+    print("\n  * clears the owner-earnings hurdle at today's price")
     print(f"\n  {R.MANUAL_POINTS} of 100 points need a human: "
           + ", ".join(R.MANUAL_COMPONENTS))
 

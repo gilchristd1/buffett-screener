@@ -158,11 +158,30 @@ def score_components(s: secdata.AnnualSeries, sector: str,
     return out
 
 
+MAX_MEASURABLE_POINTS = 70          # the 100 in §6 less the 30 that need a human
+VALUATION_POINTS = 20               # yield 10 + DCF discount 6 + multiple 4
+
+
 def total_score(components: list[tuple]) -> tuple[float, float, float]:
     """(normalised score out of 100, points earned, points available)."""
     earned = sum(c[1] for c in components)
     available = sum(c[2] for c in components)
     return (100.0 * earned / available if available else 0.0), earned, available
+
+
+def is_price_comparable(components: list[tuple]) -> bool:
+    """
+    True only when the valuation components could actually be scored.
+
+    Normalising over available points is right for tag gaps, but it quietly
+    makes an unpriced company look comparable to a priced one: in run 3 Alphabet
+    ranked 8th on 40/50 points with all twenty valuation points simply absent.
+    A score that omits price is not the same measurement, and the ranking has to
+    say so rather than interleave them.
+    """
+    val = {"Owner-earnings yield", "Discount to intrinsic value",
+           "Multiple vs own 10-year history"}
+    return sum(c[2] for c in components if c[0] in val) == VALUATION_POINTS
 
 
 # ------------------------------------------------------------ valuation --
@@ -182,11 +201,18 @@ def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float) -> float | 
 
 def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
     """
-    Lens B: two-stage DCF on owner earnings.
+    Lens B: two-stage DCF on owner earnings, with growth FADING to terminal.
 
-    Growth capped at the lower of the 10-year historical CAGR and 10%; terminal
-    growth capped at 2.5%; discounted at the required return. Deliberately
-    conservative — this sets a buy price, not a target price.
+    The first version held the starting growth rate flat for ten years. With
+    growth capped at 10% and the discount rate also 10%, stage one contributed
+    roughly ten times base earnings undiscounted, and the model ended up paying
+    about 24x owner earnings for anything that had grown quickly — extrapolating
+    a decade of high growth from a decade of history, which is precisely the
+    error §7 Lens C exists to catch ("the forecast, not the price, is doing the
+    work").
+
+    Growth now declines linearly from its starting rate to terminal growth over
+    the ten years, which is how competition actually erodes returns.
     """
     ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 11)
     if len(ys) < 5:
@@ -201,12 +227,15 @@ def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
     g = max(0.0, min(hist, 0.10))
     r, tg = config.REQUIRED_RETURN, config.TERMINAL_GROWTH_MAX
 
+    n = 10
     pv, cash = 0.0, base
-    for yr in range(1, 11):
-        cash *= (1 + g)
+    for yr in range(1, n + 1):
+        # Linear fade from the starting rate to terminal growth by year n.
+        g_yr = g + (tg - g) * (yr - 1) / (n - 1)
+        cash *= (1 + g_yr)
         pv += cash / ((1 + r) ** yr)
     terminal = cash * (1 + tg) / (r - tg)
-    pv += terminal / ((1 + r) ** 10)
+    pv += terminal / ((1 + r) ** n)
     return pv
 
 
