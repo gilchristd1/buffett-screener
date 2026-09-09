@@ -239,43 +239,94 @@ def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
     return pv
 
 
-def multiple_vs_history(s: secdata.AnnualSeries, market_cap: float) -> float | None:
+def multiple_vs_history(s: secdata.AnnualSeries, market_cap: float,
+                        year_end_closes: dict[int, float] | None = None) -> float | None:
     """
     Lens C: today's EV/EBIT in standard deviations from its own 10-year median.
 
-    Only today's EV is known, so history is approximated by holding enterprise
-    value constant and varying EBIT. It answers "is this expensive against its
-    own earnings record", which is the veto the criteria document asks for.
+    THE FIRST VERSION WAS STRUCTURALLY BROKEN, and run 4 is the proof. It held
+    enterprise value constant at today's level and varied only EBIT, so for any
+    company with growing EBIT the multiple series was monotonically decreasing
+    and the latest year was its minimum BY CONSTRUCTION. Run 4: 34 of 37 priced
+    survivors scored negative, median z-score -0.79. A measure that tells you
+    almost every company is cheap against its own history is not measuring
+    anything, and it was quietly awarding up to 4 score points to everyone while
+    its veto could essentially never fire.
+
+    The fix needs a real historical enterprise value, which means a historical
+    price. Share counts and net debt are already in the XBRL record, so:
+
+        EV(y) = close(y) x diluted shares(y) + net debt(y)
+
+    Without prices this returns None — Lens C becomes unavailable and normalises
+    out of the score. It must never fall back to the old version: a number that
+    is wrong in a known direction is worse than no number.
     """
     ys = M.common_years(s, ["operating_income"], 10)
     if len(ys) < 5 or not market_cap:
         return None
-    ev = M.enterprise_value(market_cap, s, ys[-1])
-    if not ev or ev <= 0:
+    if not year_end_closes:
         return None
-    mult = [ev / s.series("operating_income")[y]
-            for y in ys if s.series("operating_income")[y] > 0]
+
+    ebit = s.series("operating_income")
+    shares = s.series("diluted_shares")
+    mult: list[tuple[int, float]] = []
+    for y in ys:
+        close = year_end_closes.get(y)
+        if close is None or y not in shares or ebit.get(y, 0) <= 0 or shares[y] <= 0:
+            continue
+        nd = M.net_debt(s, y)
+        if nd is None:
+            continue
+        ev_y = close * shares[y] + nd
+        if ev_y > 0:
+            mult.append((y, ev_y / ebit[y]))
     if len(mult) < 5:
         return None
-    med, sd = statistics.median(mult), statistics.pstdev(mult)
-    return (mult[-1] - med) / sd if sd > 0 else 0.0
+
+    ev_now = M.enterprise_value(market_cap, s, ys[-1])
+    if not ev_now or ev_now <= 0 or ebit.get(ys[-1], 0) <= 0:
+        return None
+    now = ev_now / ebit[ys[-1]]
+
+    vals = [m for _, m in mult]
+    med, sd = statistics.median(vals), statistics.pstdev(vals)
+    if sd <= 0:
+        # A history with no variation cannot produce a z-score. The old code
+        # returned 0.0 here, which reads as "normally priced" and would award
+        # the score points to a company trading at twice its historical
+        # multiple. Unavailable is the honest answer.
+        return None
+    return (now - med) / sd
 
 
-def buy_price(intrinsic: float | None, shares: float, moat: str) -> float | None:
-    """Intrinsic value per share, less the margin of safety §7 requires."""
+def buy_price(intrinsic: float | None, shares: float, moat: str,
+              mos: float | None = None) -> float | None:
+    """
+    Intrinsic value per share, less the margin of safety §7 requires.
+
+    `mos` is the computed, continuous margin from moat.py and takes precedence.
+    The `moat` label remains the fallback for the manual override path and for
+    callers that have a label but no score.
+    """
     if not intrinsic or not shares:
         return None
-    mos = config.MARGIN_OF_SAFETY.get(moat, config.MARGIN_OF_SAFETY["uncertain"])
+    if mos is None:
+        mos = config.MARGIN_OF_SAFETY.get(moat, config.MARGIN_OF_SAFETY["uncertain"])
     return (intrinsic / shares) * (1 - mos)
 
 
 def load_moat_classifications(path: Path) -> dict[str, str]:
     """
-    ticker -> wide | narrow | uncertain, from a file you maintain by hand.
+    ticker -> wide | narrow | uncertain, read from a file you maintain by hand.
 
-    Moat width cannot be computed, and it drives both the valuation hurdle's
-    quality credit and the required margin of safety. Anything unlisted defaults
-    to `narrow`, so an unreviewed company never receives the quality discount.
+    This is now an OVERRIDE, not the source. moat.py computes durability from
+    the financial record for every company; a ticker listed here overrides that
+    computation with your own judgement, and an absent file means every company
+    is scored rather than every company defaulting to "narrow".
+
+    Keep it short. A row here should record a disagreement you can articulate —
+    a moat the numbers cannot see yet, or one you believe is already broken.
     """
     if not path.exists():
         return {}

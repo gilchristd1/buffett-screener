@@ -333,6 +333,51 @@ def fetch_prices(tickers: list[str]) -> dict[str, tuple[float, float]]:
     return out
 
 
+def fetch_year_end_closes(tickers: list[str], years: int = 11) -> dict[str, dict[int, float]]:
+    """
+    ticker -> {calendar year: closing price near that year end}.
+
+    Needed by Lens C. Without it, the only enterprise value available is today's,
+    and holding EV constant while EBIT grows makes every growing company look
+    cheap against its own history by construction — see the note in
+    rank.multiple_vs_history.
+
+    Best-effort: a throttled price source degrades Lens C to "unavailable",
+    which normalises out of the score. It must never fall back to the biased
+    version, which reports a discount that is an artefact of the method.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("  yfinance not installed — Lens C (multiple vs own history) unavailable")
+        return {}
+
+    out: dict[str, dict[int, float]] = {}
+    for i in range(0, len(tickers), PRICE_BATCH):
+        batch = tickers[i:i + PRICE_BATCH]
+        try:
+            df = yf.download(batch, period=f"{years}y", interval="1mo", group_by="ticker",
+                             auto_adjust=False, progress=False, threads=True)
+        except Exception as exc:
+            print(f"  history batch {i} failed: {type(exc).__name__}: {exc}")
+            continue
+        for t in batch:
+            try:
+                sub = df[t] if len(batch) > 1 else df
+                close = sub["Close"].dropna()
+                if close.empty:
+                    continue
+                # Last observation in each calendar year: the closest thing to a
+                # fiscal-year-end price without knowing each filer's year end.
+                by_year: dict[int, float] = {}
+                for ts, v in close.items():
+                    by_year[ts.year] = float(v)
+                out[t] = by_year
+            except Exception:
+                continue
+    return out
+
+
 def size_filter(out_dir: Path) -> None:
     """
     Apply market cap and liquidity to the gated survivors only.

@@ -121,16 +121,36 @@ def rank() -> None:
     if not survivors:
         sys.exit("survivors.csv is empty — nothing to rank.")
 
-    moats = R.load_moat_classifications(Path("moats.csv"))
-    if not moats:
-        print("  no moats.csv — every company treated as 'narrow', so none receives")
-        print("  the quality credit on the hurdle or the 30% margin of safety.")
+    import moat as MO
+
+    # moats.csv is an override now, not the source. Absent, every company is
+    # scored on its own record rather than every company defaulting to "narrow".
+    overrides = R.load_moat_classifications(Path("moats.csv"))
+    print(f"  moat durability: computed from the financial record"
+          + (f", {len(overrides)} manual override(s)" if overrides else ", no overrides"))
+
+    bench_path = OUT / "sector_growth.csv"
+    bench: dict[str, float] = {}
+    if bench_path.exists():
+        with open(bench_path) as fh:
+            bench = {r["module"]: float(r["median_revenue_cagr_10y"])
+                     for r in csv.DictReader(fh)}
+    else:
+        print("  no sector_growth.csv — the share-gain signal will be unavailable "
+              "(rerun --screen to build it).")
 
     zip_path = DATA / "companyfacts.zip"
     zf = zipfile.ZipFile(zip_path) if zip_path.exists() else None
     universe = {r["ticker"]: r for r in load_universe()}
 
-    rows, watch = [], []
+    # Lens C needs a historical enterprise value, not just today's. One batched
+    # call for the whole survivor list; if it fails, Lens C reports unavailable
+    # rather than reverting to the version that called everything cheap.
+    import universe as U
+    closes = U.fetch_year_end_closes([r["ticker"] for r in survivors])
+    print(f"  price history for Lens C: {len(closes)}/{len(survivors)} survivors")
+
+    rows, watch, moat_rows = [], [], []
     for r in survivors:
         t_ = r["ticker"]
         facts = _facts_for(int(universe[t_]["cik"]), zf) if t_ in universe else None
@@ -140,12 +160,21 @@ def rank() -> None:
         module = r.get("module", "")
         mcap = float(r["market_cap"]) if r.get("market_cap") else None
         shares = float(r["shares"]) if r.get("shares") else None
-        moat = moats.get(t_, "narrow")
+
+        dur, dur_comps, dur_avail = MO.durability(s, module, bench.get(module))
+        if t_ in overrides:
+            moat = overrides[t_]
+            mos = config.MARGIN_OF_SAFETY.get(moat, config.MARGIN_OF_SAFETY["uncertain"])
+            credit, source = moat == "wide", "override"
+        else:
+            moat = MO.label(dur, dur_avail)
+            mos = MO.margin_of_safety(dur, dur_avail)
+            credit, source = MO.grants_quality_credit(dur, dur_avail), "computed"
 
         oey = R.owner_earnings_yield(s, mcap) if mcap else None
         iv = R.dcf_intrinsic_value(s)
-        mvh = R.multiple_vs_history(s, mcap) if mcap else None
-        bp = R.buy_price(iv, shares, moat) if (iv and shares) else None
+        mvh = R.multiple_vs_history(s, mcap, closes.get(t_)) if mcap else None
+        bp = R.buy_price(iv, shares, moat, mos) if (iv and shares) else None
         price = (mcap / shares) if (mcap and shares) else None
         disc = (1 - price / (iv / shares)) if (iv and shares and price) else None
 
@@ -162,11 +191,24 @@ def rank() -> None:
             rs = [x for x in (M.roic(s, y, cap_rnd)
                               for y in M.common_years(s, ["operating_income", "total_equity"], 10))
                   if x is not None]
+            # The credit is granted on measured durability now, not on a label
+            # someone typed. Passing the label keeps metrics.py unaware of moat.py.
             hurdle = M.required_owner_earnings_yield(
-                st.median(rs) if rs else None, M.classify_reinvestment(s), moat)
+                st.median(rs) if rs else None, M.classify_reinvestment(s),
+                "wide" if credit else "narrow")
+
+        moat_rows.append({
+            "ticker": t_, "name": r["name"], "module": module,
+            "durability": round(dur, 1), "label": moat, "source": source,
+            "coverage": f"{dur_avail:.0f}/100", "margin_of_safety": f"{mos:.2f}",
+            **{c[0]: (f"{c[1]:.0f}/{c[2]:.0f} — {c[3]}" if c[2] else f"n/a — {c[3]}")
+               for c in dur_comps},
+        })
 
         row = {
             "ticker": t_, "name": r["name"], "module": module, "moat": moat,
+            "durability": round(dur, 1), "moat_source": source,
+            "margin_of_safety": f"{mos:.2f}",
             "score": round(score, 1), "points": f"{earned:.0f}/{avail:.0f}",
             "priced": "yes" if priced else "NO — score omits all 20 valuation points",
             "owner_earnings_yield": f"{oey:.4f}" if oey is not None else "",
@@ -194,6 +236,14 @@ def rank() -> None:
         with open(OUT / "watchlist.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(watch[0]))
             w.writeheader(); w.writerows(watch)
+    if moat_rows:
+        # Every durability score with its six components and their reasons. The
+        # score changes the price you would pay, so it has to be auditable on
+        # the same terms as a gate rejection.
+        moat_rows.sort(key=lambda x: -x["durability"])
+        with open(OUT / "moat.csv", "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(moat_rows[0]))
+            w.writeheader(); w.writerows(moat_rows)
 
     buyable = [r for r in rows if r["clears_hurdle"] == "yes"]
     print(f"\nranked {len(rows)} survivors -> {OUT/'ranked.csv'}")
@@ -212,6 +262,14 @@ def rank() -> None:
         for r in partial:
             print(f"        {r['ticker']:<8}{r['score']:>6.1f}  {r['points']:<8}  {r['name'][:40]}")
     print("\n  * clears the owner-earnings hurdle at today's price")
+    wide = [r for r in rows if r["moat"] == "wide"]
+    unc = [r for r in rows if r["moat"] == "uncertain"]
+    print(f"\n  moat durability: {len(wide)} wide, "
+          f"{len(rows) - len(wide) - len(unc)} narrow, {len(unc)} uncertain "
+          f"-> {OUT/'moat.csv'}")
+    if wide:
+        print("        wide: " + ", ".join(f"{r['ticker']} ({r['durability']:.0f})"
+                                           for r in sorted(wide, key=lambda x: -x["durability"])))
     print(f"\n  {R.MANUAL_POINTS} of 100 points need a human: "
           + ", ".join(R.MANUAL_COMPONENTS))
 
@@ -256,14 +314,24 @@ def screen() -> None:
     if zf is None:
         print("No bulk zip found — falling back to the per-CIK API (slow).")
 
+    import metrics as M
+
     OUT.mkdir(exist_ok=True)
     results, survivors = [], []
+    # Sector growth benchmark, harvested on the pass we are already making.
+    # It has to be built from the WHOLE universe, losers included — a benchmark
+    # of survivors only would make "faster than the sector" mean "faster than
+    # other winners". Nothing else in the run needs a second full pass for it.
+    growth_rows: list[tuple[str, float]] = []
     for n, row in enumerate(universe, 1):
         print(f"  screening {n:,}/{len(universe):,}", end="\r")
         facts = _facts_for(int(row["cik"]), zf)
         if not facts:
             continue
         series = secdata.extract(facts)
+        g = M.calendar_cagr(series, "revenue", 10)
+        if g is not None:
+            growth_rows.append((row["module"], g))
         res = gates.run_gates(series, row["ticker"], row["module"])
         passed = res.passed()
         for g in res.gates:
@@ -293,7 +361,17 @@ def screen() -> None:
             w.writeheader()
             w.writerows(survivors)
 
+    import moat as MO
+    bench = MO.sector_medians(growth_rows)
+    with open(OUT / "sector_growth.csv", "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["module", "median_revenue_cagr_10y", "n"])
+        counts = {m: sum(1 for x, _ in growth_rows if x == m) for m in bench}
+        for m, v in sorted(bench.items(), key=lambda kv: -kv[1]):
+            w.writerow([m, f"{v:.5f}", counts[m]])
+
     print(f"\n{len(universe):,} screened -> {len(survivors):,} survivors")
+    print(f"  sector growth benchmark: {len(bench)} modules -> {OUT/'sector_growth.csv'}")
     print(f"  detail:    {OUT/'results.csv'}")
     print(f"  survivors: {OUT/'survivors.csv'}")
 
