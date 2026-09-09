@@ -62,8 +62,20 @@ def _annual_entries(tag_values: dict[int, float], instant: bool):
     return out
 
 
-def make_companyfacts(cik: int, name: str, profitable=True, growth=1.06):
+def make_companyfacts(cik: int, name: str, profitable=True, growth=1.06,
+                      margin_decay=1.0):
+    """
+    `margin_decay` < 1 erodes the profit margins year by year while revenue
+    still grows — a business whose advantage is being competed away. Needed to
+    test the moat trend signal, which the flat-margin fixture cannot exercise.
+    """
     rev = {y: 1000.0 * (growth ** (y - 2015)) for y in YEARS}
+    decay = {y: margin_decay ** (y - 2015) for y in YEARS}
+    PROFIT_TAGS = {
+        "OperatingIncomeLoss", "NetIncomeLoss", "IncomeTaxExpenseBenefit",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItems"
+        "NoncontrollingInterest",
+    }
     ni_margin = 0.166 if profitable else 0.02
     flows = {
         "Revenues": 1.0, "CostOfRevenue": 0.55, "OperatingIncomeLoss": 0.22,
@@ -83,7 +95,9 @@ def make_companyfacts(cik: int, name: str, profitable=True, growth=1.06):
     }
     gaap = {}
     for tag, frac in flows.items():
-        gaap[tag] = {"units": {"USD": _annual_entries({y: rev[y] * frac for y in YEARS}, False)}}
+        d = decay if tag in PROFIT_TAGS else {y: 1.0 for y in YEARS}
+        gaap[tag] = {"units": {"USD": _annual_entries(
+            {y: rev[y] * frac * d[y] for y in YEARS}, False)}}
     for tag, frac in instants.items():
         gaap[tag] = {"units": {"USD": _annual_entries({y: rev[y] * frac for y in YEARS}, True)}}
     gaap["WeightedAverageNumberOfDilutedSharesOutstanding"] = {
@@ -177,7 +191,8 @@ def main():
         import os
         os.chdir(work)
         for f in ["config.py", "secdata.py", "metrics.py", "gates.py",
-                  "universe.py", "run_screen.py", "screener_import.py"]:
+                  "universe.py", "run_screen.py", "screener_import.py",
+                  "rank.py", "moat.py"]:
             shutil.copy(ROOT / f, work / f)
         os.environ["SEC_USER_AGENT"] = "Test User test@example.com"
         n = U.build(work / "out", work / "data" / "companyfacts.zip",
@@ -215,6 +230,38 @@ def main():
         failures += not check("gate run exits cleanly", r.returncode == 0,
                               (r.stdout + r.stderr)[-300:])
         failures += not check("results.csv written", (work / "out" / "results.csv").exists())
+
+        # --- the rank step, end to end ---------------------------------------
+        # Run 3 shipped a rank step whose output never reached the repo because
+        # nothing here exercised it. Synthesise a priced survivor list and run
+        # the real CLI over it, so the wiring is tested rather than assumed.
+        import csv as _csv
+        with open(work / "out" / "survivors.csv", "w", newline="") as fh:
+            w = _csv.DictWriter(fh, fieldnames=["ticker", "name", "module",
+                                                "shares", "market_cap", "adv", "excused"])
+            w.writeheader()
+            for row in rows[:4]:
+                w.writerow({"ticker": row["ticker"], "name": row["name"],
+                            "module": row["module"], "shares": "100000000",
+                            "market_cap": "5000000000", "adv": "20000000",
+                            "excused": ""})
+        r = subprocess.run([sys.executable, "run_screen.py", "--rank"],
+                           capture_output=True, text=True, cwd=work)
+        failures += not check("rank step exits cleanly", r.returncode == 0,
+                              (r.stdout + r.stderr)[-300:])
+        failures += not check("ranked.csv written", (work / "out" / "ranked.csv").exists())
+        failures += not check("moat.csv written", (work / "out" / "moat.csv").exists())
+        if (work / "out" / "ranked.csv").exists():
+            rk = list(_csv.DictReader(open(work / "out" / "ranked.csv")))
+            failures += not check("ranked rows carry a computed durability score",
+                                  all(r_["moat_source"] == "computed" and r_["durability"]
+                                      for r_ in rk), str(rk[:1])[:120])
+            failures += not check("no survivor defaults to a hand-typed 'narrow'",
+                                  any(r_["moat"] != "narrow" for r_ in rk)
+                                  or all(float(r_["durability"]) > 0 for r_ in rk))
+            failures += not check("the margin of safety sits inside its configured range",
+                                  all(0.30 <= float(r_["margin_of_safety"]) <= 0.50
+                                      for r_ in rk))
     finally:
         import os
         os.chdir(cwd)
@@ -327,6 +374,107 @@ def main():
     y = R.owner_earnings_yield(good, 1_000.0)
     failures += not check("owner-earnings yield is computable from a market cap",
                           y is not None and y > 0, f"{y:.1%}" if y else "None")
+
+    print("\n=== Lens C must not call every growing company cheap ===")
+    # Run 4: 34 of 37 priced survivors scored negative, median z -0.79. Holding
+    # EV constant while EBIT grows makes the latest year the minimum of the
+    # series by construction, so the veto could never fire.
+    grower = secdata.extract(make_companyfacts(95, "Grower Co", growth=1.10))
+    failures += not check("Lens C is unavailable without price history, not biased",
+                          R.multiple_vs_history(grower, 5_000.0) is None)
+
+    ebit_years = sorted(grower.series("operating_income"))
+    sh = grower.series("diluted_shares")
+    ebit = grower.series("operating_income")
+    # A price that tracks earnings at roughly 10x, with the mild year-to-year
+    # wobble any real multiple has. Today at 10x must read as neither cheap nor
+    # dear — the old method, holding EV flat, would have called it cheap.
+    # Prices chosen so that EV/EBIT is exactly 10x times a mild yearly wobble —
+    # the variation any real multiple has. Today at a flat 10x must then read as
+    # neither cheap nor dear. The old method, holding EV constant, called it cheap.
+    wobble = [1.00, 1.08, 0.94, 1.05, 0.97, 1.06, 0.95, 1.03, 0.98, 1.02, 1.00]
+    px = {y: (10.0 * wobble[i % len(wobble)] * ebit[y] - MM.net_debt(grower, y)) / sh[y]
+          for i, y in enumerate(ebit_years)}
+    last = ebit_years[-1]
+    at = lambda x: x * ebit[last] - MM.net_debt(grower, last)   # market cap at x times EBIT
+
+    z_fair = R.multiple_vs_history(grower, at(10.0), px)
+    failures += not check("a fairly-priced grower reads as neither cheap nor dear",
+                          z_fair is not None and abs(z_fair) < 1.0, f"z {z_fair:.2f}")
+    z_dear = R.multiple_vs_history(grower, at(20.0), px)
+    failures += not check("a doubled multiple reads as expensive",
+                          z_dear is not None and z_dear > 1.0,
+                          f"dear {z_dear:.2f} vs fair {z_fair:.2f}")
+    z_cheap = R.multiple_vs_history(grower, at(5.0), px)
+    failures += not check("a halved multiple reads as cheap",
+                          z_cheap is not None and z_cheap < -1.0,
+                          f"cheap {z_cheap:.2f} vs fair {z_fair:.2f}")
+    failures += not check("Lens C is unavailable when the history has no variation",
+                          R.multiple_vs_history(
+                              grower, at(10.0),
+                              {y: (10.0 * ebit[y] - MM.net_debt(grower, y)) / sh[y]
+                               for y in ebit_years}) is None)
+
+    print("\n=== Moat durability, computed rather than declared ===")
+    import moat as MO
+
+    d_good, comps_good, avail_good = MO.durability(good, "consumer", 0.04)
+    failures += not check("durability scores a healthy business on all 100 points",
+                          avail_good == 100, f"{avail_good:.0f}/100 available")
+    failures += not check("...and the score is inside the scale",
+                          0 <= d_good <= 100, f"{d_good:.1f}")
+
+    # The trend signal is the reason this is not just a restatement of the
+    # Tier 4 quality score: a company earning the same median return with an
+    # eroding margin is a weaker franchise, and must price accordingly.
+    eroding = secdata.extract(make_companyfacts(94, "Eroding Co", margin_decay=0.93))
+    d_erode, _, _ = MO.durability(eroding, "consumer", 0.04)
+    failures += not check("an eroding franchise scores below a stable one",
+                          d_erode < d_good, f"eroding {d_erode:.1f} vs stable {d_good:.1f}")
+    failures += not check("...and therefore demands a wider margin of safety",
+                          MO.margin_of_safety(d_erode) > MO.margin_of_safety(d_good),
+                          f"{MO.margin_of_safety(d_erode):.2f} vs {MO.margin_of_safety(d_good):.2f}")
+
+    # Calibration: the change must not silently re-price the middle of the
+    # distribution. A score of 50 has to land on the old 'narrow' default.
+    failures += not check("a score of 50 reproduces the old 40% narrow default",
+                          abs(MO.margin_of_safety(50.0) - 0.40) < 1e-9,
+                          f"{MO.margin_of_safety(50.0):.4f}")
+    failures += not check("a perfect score reaches the 30% floor and no further",
+                          abs(MO.margin_of_safety(100.0) - 0.30) < 1e-9)
+    failures += not check("a zero score reaches the 50% ceiling",
+                          abs(MO.margin_of_safety(0.0) - 0.50) < 1e-9)
+    failures += not check("margin of safety falls monotonically as durability rises",
+                          all(MO.margin_of_safety(a) > MO.margin_of_safety(b)
+                              for a, b in zip(range(0, 91, 10), range(10, 101, 10))))
+
+    # Thin coverage must widen the margin, not sit neutral.
+    failures += not check("thin coverage widens the margin of safety",
+                          MO.margin_of_safety(90.0, available=30) > MO.margin_of_safety(90.0, 100),
+                          f"{MO.margin_of_safety(90.0, 30):.2f} vs {MO.margin_of_safety(90.0, 100):.2f}")
+    failures += not check("thin coverage forces the label to 'uncertain'",
+                          MO.label(95.0, available=30) == "uncertain")
+    failures += not check("thin coverage withholds the hurdle's quality credit",
+                          not MO.grants_quality_credit(95.0, available=30))
+    failures += not check("a high score on full coverage does grant the credit",
+                          MO.grants_quality_credit(95.0, available=100))
+    failures += not check("labels follow the configured thresholds",
+                          MO.label(75.0) == "wide" and MO.label(55.0) == "narrow"
+                          and MO.label(20.0) == "uncertain")
+
+    # The benchmark must not be built from a handful of names.
+    thin = MO.sector_medians([("consumer", 0.05)] * 5)
+    failures += not check("a sector with too few companies yields no benchmark",
+                          thin == {}, f"{thin}")
+    wide_bench = MO.sector_medians([("consumer", 0.02)] * 15 + [("consumer", 0.06)] * 15)
+    failures += not check("a populated sector yields its median growth rate",
+                          abs(wide_bench["consumer"] - 0.04) < 1e-9, f"{wide_bench}")
+
+    # And the share-gain signal must actually respond to the benchmark.
+    hi, _, _ = MO.durability(good, "consumer", 0.01)   # company beats a slow sector
+    lo, _, _ = MO.durability(good, "consumer", 0.20)   # same company, fast sector
+    failures += not check("beating the sector scores above lagging it",
+                          hi > lo, f"{hi:.1f} vs {lo:.1f}")
 
     print(f"\n{'='*60}")
     print("ALL CHECKS PASSED" if failures == 0 else f"{failures} CHECK(S) FAILED")
