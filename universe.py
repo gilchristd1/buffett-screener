@@ -1,21 +1,24 @@
 """
-Build the eligible universe without a screener export.
+Build the eligible universe from SEC data alone.
 
-Why this exists as its own module: the obvious approach — walk every SEC ticker
-and ask yfinance for `.info` — issues one HTTP request per company. Across ~8,000
-filers that is hours of wall-clock and reliably rate-limited long before it
-finishes. It looks fine on ten tickers and fails on the real list.
+Design note — why there is no price provider in this step any more.
 
-This does it in bulk instead:
+The first version fetched prices for every SEC filer to compute market cap, so
+the size filter could be applied before the gates. That put a third-party price
+API on the critical path for ~8,000 companies, and price APIs are exactly what
+fails from a CI runner: Yahoo and most free endpoints throttle or block
+datacenter IP ranges, and a partial failure silently produces an empty universe.
 
-  shares outstanding  <- SEC XBRL (dei:EntityCommonStockSharesOutstanding),
-                         read from the bulk companyfacts zip already on disk
-  price and volume    <- one batched yfinance download covering all tickers
-  market cap          <- shares x price
+Market cap and liquidity are only an *eligibility* filter. They decide nothing
+about business quality. So the order is inverted:
 
-Two bulk sources, no per-company calls. On a GitHub runner the 1.5GB bulk
-download is a few minutes of fast network, which is why the zip is the right
-input here even though it is the wrong input on a laptop.
+    1. universe   = every SEC filer with enough filing history   (zip, no network)
+    2. gates      = the quality tests                            (zip, no network)
+    3. size filter= market cap and liquidity on the survivors    (~dozens of lookups)
+
+Nothing on the critical path needs the network, and prices are fetched for a few
+dozen names instead of thousands. If the price step fails, the run still produces
+a gated shortlist — it just isn't size-filtered yet, which is recoverable.
 """
 
 from __future__ import annotations
@@ -29,31 +32,16 @@ from pathlib import Path
 import config
 import secdata
 
-# Provider sector label -> screening module (see SECTOR_MODULES in config.py)
-SECTOR_TO_MODULE = {
-    "Technology": "software",
-    "Communication Services": "software",
-    "Consumer Cyclical": "consumer",
-    "Consumer Defensive": "consumer",
-    "Industrials": "industrials",
-    "Basic Materials": "industrials",
-    "Financial Services": "financials",
-    "Healthcare": "healthcare",
-    "Energy": "energy",
-    "Utilities": "utilities",
-    "Real Estate": "reit",
-}
-
-PRICE_BATCH = 300          # tickers per yfinance download call
 SHARES_TAGS = ["EntityCommonStockSharesOutstanding"]
+PRICE_BATCH = 100
 
 
 def shares_outstanding(facts: dict) -> float | None:
     """
     Latest reported share count, from the dei taxonomy rather than us-gaap.
 
-    dei is where the cover-page figure lives; it is filed by everyone and is
-    closer to today than the weighted-average count in the income statement.
+    dei carries the cover-page figure: filed by everyone, and closer to today
+    than the weighted-average count in the income statement.
     """
     dei = facts.get("facts", {}).get("dei", {})
     best_date, best_val = "", None
@@ -63,20 +51,15 @@ def shares_outstanding(facts: dict) -> float | None:
             continue
         for unit_vals in node.get("units", {}).values():
             for item in unit_vals:
-                end = item.get("end", "")
-                val = item.get("val")
+                end, val = item.get("end", ""), item.get("val")
                 if val and end > best_date:
                     best_date, best_val = end, float(val)
     return best_val
 
 
 def sic_to_module(sic: str | None) -> str | None:
-    """
-    Fallback sector classification from the SEC's own SIC code, used when the
-    price provider returns no sector. Coarse, but it keeps a company in the
-    funnel rather than dropping it for a missing label.
-    """
-    if not sic or not sic.isdigit():
+    """Sector module from the SEC's own SIC code. Coarse, but present for every filer."""
+    if not sic or not str(sic).isdigit():
         return None
     n = int(sic)
     # Real estate before financials: 6798 (REITs) sits inside the 6700-6799
@@ -100,72 +83,38 @@ def sic_to_module(sic: str | None) -> str | None:
     return None
 
 
-def fetch_prices(tickers: list[str]) -> dict[str, tuple[float, float]]:
-    """
-    ticker -> (last close, average daily volume) from batched downloads.
-
-    yf.download is genuinely bulk — one request per batch, not per ticker.
-    """
-    try:
-        import yfinance as yf
-    except ImportError:
-        sys.exit("pip install yfinance  (SEC data carries no prices)")
-
-    out: dict[str, tuple[float, float]] = {}
-    for i in range(0, len(tickers), PRICE_BATCH):
-        batch = tickers[i:i + PRICE_BATCH]
-        print(f"  prices {i:,}/{len(tickers):,}", end="\r", flush=True)
-        try:
-            df = yf.download(batch, period="3mo", interval="1d",
-                             group_by="ticker", auto_adjust=False,
-                             progress=False, threads=True)
-        except Exception as exc:
-            print(f"\n  batch {i} failed ({type(exc).__name__}) — continuing")
-            continue
-        for t in batch:
-            try:
-                sub = df[t] if len(batch) > 1 else df
-                close = sub["Close"].dropna()
-                vol = sub["Volume"].dropna()
-                if close.empty or vol.empty:
-                    continue
-                out[t] = (float(close.iloc[-1]), float(vol.mean()))
-            except Exception:
-                continue
-    print(f"  prices {len(tickers):,}/{len(tickers):,}")
-    return out
+def excluded_by_sic(sic: str | None) -> str | None:
+    """Tier 1 exclusions that are visible from the SIC code alone."""
+    if not sic or not str(sic).isdigit():
+        return None
+    n = int(sic)
+    if n == 2836 or n == 8731:
+        return "clinical-stage biotech / research"
+    if n == 6770:
+        return "blank check / SPAC"
+    if n == 6726:
+        return "closed-end fund / investment office"
+    return None
 
 
 def build(out_dir: Path, zip_path: Path) -> int:
+    """Every SEC filer with a ticker and enough filing history. No network."""
     if not zip_path.exists():
-        sys.exit(f"{zip_path} not found — run with --download first.\n"
-                 "The bulk zip is what makes this approach fast; without it there\n"
-                 "is no way to get share counts in bulk.")
+        sys.exit(f"{zip_path} not found — run --download first.")
 
     tickers = secdata.load_ticker_map()
     print(f"{len(tickers):,} SEC-registered tickers")
 
-    prices = fetch_prices(sorted(tickers))
-    print(f"  {len(prices):,} with usable price history")
-
-    rows, skipped = [], {"no_price": 0, "no_shares": 0, "too_small": 0,
-                         "illiquid": 0, "no_sector": 0, "no_facts": 0}
+    rows = []
+    skipped = {"no_facts": 0, "no_shares": 0, "no_sector": 0,
+               "excluded_sic": 0, "short_history": 0, "unreadable": 0}
 
     with zipfile.ZipFile(zip_path) as z:
         names = set(z.namelist())
+        print(f"  bulk file holds {len(names):,} company records")
         for n, (ticker, meta) in enumerate(sorted(tickers.items()), 1):
-            if n % 500 == 0:
-                print(f"  screening universe {n:,}/{len(tickers):,}", end="\r", flush=True)
-            px = prices.get(ticker)
-            if not px:
-                skipped["no_price"] += 1
-                continue
-            price, volume = px
-            adv = price * volume
-            if adv < config.MIN_AVG_DAILY_VALUE:
-                skipped["illiquid"] += 1
-                continue
-
+            if n % 1000 == 0:
+                print(f"  reading {n:,}/{len(tickers):,}", flush=True)
             fname = f"CIK{meta['cik']:010d}.json"
             if fname not in names:
                 skipped["no_facts"] += 1
@@ -173,28 +122,42 @@ def build(out_dir: Path, zip_path: Path) -> int:
             try:
                 facts = json.loads(z.read(fname))
             except Exception:
-                skipped["no_facts"] += 1
+                skipped["unreadable"] += 1
+                continue
+
+            sic = str(facts.get("sic") or "")
+            if excluded_by_sic(sic):
+                skipped["excluded_sic"] += 1
+                continue
+            module = sic_to_module(sic)
+            if not module:
+                skipped["no_sector"] += 1
+                continue
+
+            # Enough history to test? Cheap check before the gates do real work.
+            series = secdata.extract(facts)
+            years = series.series("net_income")
+            need = (config.MIN_YEARS_HISTORY_CYCLICAL
+                    if module in ("industrials", "energy") else config.MIN_YEARS_HISTORY)
+            if len(years) < min(need, config.MIN_YEARS_HISTORY):
+                skipped["short_history"] += 1
                 continue
 
             sh = shares_outstanding(facts)
             if not sh:
                 skipped["no_shares"] += 1
-                continue
-            mcap = sh * price
-            if mcap < config.MIN_MARKET_CAP:
-                skipped["too_small"] += 1
-                continue
-
-            module = sic_to_module(str(facts.get("sic") or ""))
-            if not module:
-                skipped["no_sector"] += 1
-                continue
 
             rows.append({
                 "ticker": ticker, "cik": meta["cik"], "name": meta["title"],
-                "market_cap": int(mcap), "adv": int(adv),
-                "yf_sector": facts.get("sicDescription", ""), "module": module,
+                "shares": int(sh) if sh else 0,
+                "sic": sic, "sic_desc": facts.get("sicDescription", ""),
+                "module": module,
+                "market_cap": "", "adv": "",     # filled by the size filter, post-gates
             })
+
+    if not rows:
+        sys.exit("Universe is empty. Check the bulk zip downloaded correctly "
+                 f"({zip_path}, {zip_path.stat().st_size:,} bytes).")
 
     out_dir.mkdir(exist_ok=True)
     with open(out_dir / "universe.csv", "w", newline="") as fh:
@@ -205,3 +168,91 @@ def build(out_dir: Path, zip_path: Path) -> int:
     print(f"\nuniverse: {len(rows):,} names -> {out_dir/'universe.csv'}")
     print("  excluded: " + ", ".join(f"{k} {v:,}" for k, v in skipped.items()))
     return len(rows)
+
+
+# ------------------------------------------------------------ size filter --
+def fetch_prices(tickers: list[str]) -> dict[str, tuple[float, float]]:
+    """ticker -> (last close, average daily volume). Small list, so failures are visible."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("  yfinance not installed — skipping the size filter")
+        return {}
+
+    out: dict[str, tuple[float, float]] = {}
+    for i in range(0, len(tickers), PRICE_BATCH):
+        batch = tickers[i:i + PRICE_BATCH]
+        try:
+            df = yf.download(batch, period="3mo", interval="1d", group_by="ticker",
+                             auto_adjust=False, progress=False, threads=True)
+        except Exception as exc:
+            print(f"  price batch {i} failed: {type(exc).__name__}: {exc}")
+            continue
+        for t in batch:
+            try:
+                sub = df[t] if len(batch) > 1 else df
+                close, vol = sub["Close"].dropna(), sub["Volume"].dropna()
+                if close.empty or vol.empty:
+                    continue
+                out[t] = (float(close.iloc[-1]), float(vol.mean()))
+            except Exception:
+                continue
+    return out
+
+
+def size_filter(out_dir: Path) -> None:
+    """
+    Apply market cap and liquidity to the gated survivors only.
+
+    Deliberately non-fatal: if prices can't be fetched, the survivor list stands
+    unfiltered with a warning rather than the run failing. A shortlist you have
+    to size-check by hand beats no shortlist at all.
+    """
+    src = out_dir / "survivors.csv"
+    if not src.exists():
+        print("No survivors.csv — nothing to size-filter.")
+        return
+    with open(src) as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows:
+        print("survivors.csv is empty — nothing to size-filter.")
+        return
+
+    print(f"Size-filtering {len(rows)} survivors...")
+    prices = fetch_prices([r["ticker"] for r in rows])
+    if not prices:
+        print("  WARNING: no prices retrieved — leaving the survivor list unfiltered.")
+        print("  Market cap and liquidity have NOT been applied; check by hand.")
+        return
+
+    kept, dropped = [], {"no_price": 0, "no_shares": 0, "too_small": 0, "illiquid": 0}
+    for r in rows:
+        px = prices.get(r["ticker"])
+        if not px:
+            dropped["no_price"] += 1
+            kept.append(r)          # keep rather than silently lose a good name
+            continue
+        price, volume = px
+        shares = float(r.get("shares") or 0)
+        adv = price * volume
+        r["adv"] = int(adv)
+        if not shares:
+            dropped["no_shares"] += 1
+            kept.append(r)
+            continue
+        mcap = shares * price
+        r["market_cap"] = int(mcap)
+        if mcap < config.MIN_MARKET_CAP:
+            dropped["too_small"] += 1
+            continue
+        if adv < config.MIN_AVG_DAILY_VALUE:
+            dropped["illiquid"] += 1
+            continue
+        kept.append(r)
+
+    with open(out_dir / "survivors.csv", "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(kept)
+    print(f"  {len(rows)} -> {len(kept)} after size and liquidity")
+    print("  dropped: " + ", ".join(f"{k} {v}" for k, v in dropped.items()))

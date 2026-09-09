@@ -2,8 +2,10 @@
 """
 Run the screen.
 
-    python3 run_screen.py --from-screener finviz.csv   # universe from a screener export
-    python3 run_screen.py --screen                     # run gates over the universe
+    python3 run_screen.py --download          # SEC bulk companyfacts
+    python3 run_screen.py --build-universe    # eligible filers, from the zip, no network
+    python3 run_screen.py --screen            # run the gates
+    python3 run_screen.py --size-filter       # market cap + liquidity on the survivors
     python3 run_screen.py --explain AAPL               # why did one name pass or fail?
 
     python3 run_screen.py --build-universe   # fallback: every SEC ticker via yfinance (slow)
@@ -89,11 +91,20 @@ def universe_from_screener(path: str) -> None:
               f"{', '.join(missing[:10])}{' ...' if len(missing) > 10 else ''}")
 
     OUT.mkdir(exist_ok=True)
+    if not out:
+        sys.exit("No rows survived Tier 1 — check the screener export columns.")
+
     with open(OUT / "universe.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(out[0]))
         w.writeheader()
         w.writerows(out)
     print(f"universe: {len(out):,} names -> {OUT/'universe.csv'}")
+
+
+def size_filter() -> None:
+    """Apply market cap and liquidity to the gated survivors (see universe.py)."""
+    import universe
+    universe.size_filter(OUT)
 
 
 def build_universe() -> None:
@@ -148,9 +159,14 @@ def screen() -> None:
         if passed:
             survivors.append({
                 "ticker": row["ticker"], "name": row["name"], "module": row["module"],
-                "market_cap": row["market_cap"],
+                "shares": row.get("shares", ""), "market_cap": row.get("market_cap", ""),
+                "adv": row.get("adv", ""),
                 "excused": ",".join(g.code for g in res.failures),
             })
+
+    if not results:
+        sys.exit("No companies were evaluated. Either universe.csv is empty or no "
+                 "SEC facts could be read for any of them.")
 
     with open(OUT / "results.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(results[0]))
@@ -199,9 +215,11 @@ def main() -> None:
     p.add_argument("--from-screener", metavar="CSV",
                    help="build the universe from a screener export (recommended)")
     p.add_argument("--build-universe", action="store_true",
-                   help="fallback: walk every SEC ticker via yfinance (slow)")
+                   help="build the eligible universe from the SEC bulk file (no network)")
     p.add_argument("--download", action="store_true")
     p.add_argument("--screen", action="store_true")
+    p.add_argument("--size-filter", action="store_true",
+                   help="apply market cap and liquidity to the gated survivors")
     p.add_argument("--explain", metavar="TICKER")
     a = p.parse_args()
 
@@ -214,9 +232,12 @@ def main() -> None:
         build_universe()
     if a.screen:
         screen()
+    if a.size_filter:
+        size_filter()
     if a.explain:
         explain(a.explain)
-    if not any([a.download, a.from_screener, a.build_universe, a.screen, a.explain]):
+    if not any([a.download, a.from_screener, a.build_universe, a.screen,
+                a.size_filter, a.explain]):
         p.print_help()
 
 

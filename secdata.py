@@ -134,16 +134,37 @@ def _headers() -> dict:
     }
 
 
+MIN_BULK_BYTES = 200_000_000   # a real companyfacts.zip is >1GB; anything near
+                               # this is a redirect page or a truncated transfer
+
+
 def download_bulk_companyfacts(dest: Path = CACHE / "companyfacts.zip") -> Path:
-    """One ~1.5GB download instead of ~8,000 API calls. Do this once a quarter."""
+    """
+    One bulk download instead of ~8,000 API calls. Once a quarter is plenty.
+
+    The size check matters: a silent partial download produces a zip that opens
+    but is missing most companies, and the failure then surfaces much later as
+    an empty universe with no obvious cause.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.exists() and dest.stat().st_size > 100_000_000:
+    if dest.exists() and dest.stat().st_size > MIN_BULK_BYTES:
+        print(f"  cached: {dest} ({dest.stat().st_size:,} bytes)")
         return dest
     with requests.get(SEC_BULK_URL, headers=_headers(), stream=True, timeout=1800) as r:
         r.raise_for_status()
         with open(dest, "wb") as fh:
             for chunk in r.iter_content(chunk_size=1 << 20):
                 fh.write(chunk)
+    size = dest.stat().st_size
+    print(f"  downloaded {size:,} bytes")
+    if size < MIN_BULK_BYTES:
+        raise SystemExit(
+            f"companyfacts.zip is only {size:,} bytes — expected over "
+            f"{MIN_BULK_BYTES:,}. The download was truncated or the URL now "
+            f"returns something else ({SEC_BULK_URL})."
+        )
+    with zipfile.ZipFile(dest) as z:
+        print(f"  contains {len(z.namelist()):,} company records")
     return dest
 
 
