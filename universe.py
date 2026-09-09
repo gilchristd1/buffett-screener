@@ -57,30 +57,73 @@ def shares_outstanding(facts: dict) -> float | None:
     return best_val
 
 
+# Fee businesses: asset managers, exchanges, brokers, advisers. §M4 says these
+# take the OPERATING-COMPANY gates, not the bank-and-insurer ROE track — their
+# balance sheet is not the product. Seven of the ten financial survivors in the
+# first run were on the wrong track because this routing did not exist.
+FEE_BUSINESS_SIC = set(range(6200, 6300)) | {6199, 6282, 6289, 7320}
+
+
 def sic_to_module(sic: str | None) -> str | None:
-    """Sector module from the SEC's own SIC code. Coarse, but present for every filer."""
+    """
+    Sector module from the SEC's own SIC code.
+
+    Order matters throughout: the narrow ranges must be tested before the broad
+    ones. In the first run `1000 <= n <= 3999 -> industrials` was a catch-all
+    that swallowed household products (Church & Dwight), apparel (lululemon),
+    communications equipment (Qualcomm) and publishing (New York Times), so all
+    four were judged against industrials thresholds rather than their own.
+    """
     if not sic or not str(sic).isdigit():
         return None
     n = int(sic)
-    # Real estate before financials: 6798 (REITs) sits inside the 6700-6799
-    # holding-company range, so testing financials first misclassifies every REIT.
+
+    # --- finance, most specific first ---
+    # 6798 (REITs) sits inside the 6700-6799 holding-company range, so testing
+    # financials first misclassifies every REIT.
     if 6500 <= n <= 6599 or n == 6798:
         return "reit"
+    if n in FEE_BUSINESS_SIC:
+        return "fee_business"
     if 6000 <= n <= 6499 or 6700 <= n <= 6799:
         return "financials"
+
     if 4900 <= n <= 4949:
         return "utilities"
     if 1200 <= n <= 1399 or 2900 <= n <= 2999:
         return "energy"
-    if 7370 <= n <= 7379 or 3570 <= n <= 3579 or 3670 <= n <= 3679:
+
+    # --- technology and media, before the industrials catch-all ---
+    if (7370 <= n <= 7379 or 3570 <= n <= 3579
+            or 3660 <= n <= 3679          # communications equipment + semiconductors
+            or 3820 <= n <= 3827          # instruments, measurement, lab
+            or 2700 <= n <= 2799          # publishing
+            or 4830 <= n <= 4841          # broadcasting and cable
+            or n == 7812 or n == 7822 or n == 7841):   # motion picture / media
         return "software"
+
     if 8000 <= n <= 8099 or 2830 <= n <= 2836 or 3840 <= n <= 3851:
         return "healthcare"
-    if 5200 <= n <= 5999 or 2000 <= n <= 2199 or 5800 <= n <= 5899:
+
+    # --- consumer, before the industrials catch-all ---
+    if (5200 <= n <= 5999                 # retail
+            or 2000 <= n <= 2199          # food, beverage, tobacco
+            or 2200 <= n <= 2399          # textiles and apparel
+            or 2840 <= n <= 2844          # soap, cosmetics, household products
+            or 3021 <= n <= 3021 or n == 3140 or n == 3711  # footwear, motor vehicles
+            or 5800 <= n <= 5899          # restaurants
+            or n == 7011):                # hotels
         return "consumer"
+
     if 1000 <= n <= 3999 or 4000 <= n <= 4799 or 5000 <= n <= 5199:
         return "industrials"
     return None
+
+
+# §M4: fee businesses run the operating-company gates. Map them onto the
+# consumer module, whose thresholds (ROIC >=15%, GP/assets >=30%, 2.5x leverage)
+# are the closest fit for an asset-light fee earner.
+FEE_BUSINESS_MODULE = "consumer"
 
 
 def excluded_by_sic(sic: str | None) -> str | None:
@@ -147,8 +190,10 @@ def build(out_dir: Path, zip_path: Path, subs_path: Path | None = None) -> int:
     print(f"  metadata for {len(meta_by_cik):,} companies")
 
     rows = []
+    seen_cik: dict[int, dict] = {}
     skipped = {"no_facts": 0, "no_meta": 0, "no_exchange": 0, "no_shares": 0,
-               "no_sector": 0, "excluded_sic": 0, "short_history": 0, "unreadable": 0}
+               "no_sector": 0, "excluded_sic": 0, "short_history": 0,
+               "unreadable": 0, "duplicate_share_class": 0}
 
     with zipfile.ZipFile(zip_path) as z:
         names = set(z.namelist())
@@ -179,6 +224,8 @@ def build(out_dir: Path, zip_path: Path, subs_path: Path | None = None) -> int:
                 skipped["excluded_sic"] += 1
                 continue
             module = sic_to_module(sic)
+            if module == "fee_business":
+                module = FEE_BUSINESS_MODULE
             if not module:
                 skipped["no_sector"] += 1
                 continue
@@ -196,13 +243,27 @@ def build(out_dir: Path, zip_path: Path, subs_path: Path | None = None) -> int:
             if not sh:
                 skipped["no_shares"] += 1
 
-            rows.append({
+            # One row per company, not per share class. Alphabet occupied four
+            # of the 54 survivor slots in the first run (GOOG, GOOGL, GOOGM,
+            # GOOGN). Keep the shortest ticker, which is conventionally the
+            # primary listing.
+            cik_int = int(meta["cik"])
+            if cik_int in seen_cik:
+                skipped["duplicate_share_class"] += 1
+                prev = seen_cik[cik_int]
+                if (len(ticker), ticker) < (len(prev["ticker"]), prev["ticker"]):
+                    prev["ticker"] = ticker
+                continue
+
+            row = {
                 "ticker": ticker, "cik": meta["cik"], "name": meta["title"],
                 "shares": int(sh) if sh else 0,
                 "sic": sic, "sic_desc": cmeta["sic_desc"],
                 "module": module,
                 "market_cap": "", "adv": "",     # filled by the size filter, post-gates
-            })
+            }
+            seen_cik[cik_int] = row
+            rows.append(row)
 
     if not rows:
         print("  excluded: " + ", ".join(f"{k} {v:,}" for k, v in skipped.items()))

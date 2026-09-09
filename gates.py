@@ -127,11 +127,25 @@ def gate_C4_leverage(s: AnnualSeries, sector: str) -> GateResult:
         return GateResult("C4", False, "EBITDA not positive at test point")
     ratio = nd / e
     cover = M.interest_cover(s, fy)
-    ok = ratio <= max_nd and (cover is None or cover >= min_cover)
     label = "trough" if at_trough else "latest"
+
+    if cover is None:
+        # Unknown is not "safe". A company with net debt whose interest cost we
+        # cannot read has not passed a debt-survivability test — it has evaded
+        # one. Only a genuinely net-cash balance sheet is excused.
+        if nd > 0:
+            return GateResult("C4", None,
+                              f"net debt/EBITDA {ratio:.2f}x ({label}) but interest "
+                              f"expense is not reported — cover unknown, not infinite",
+                              ratio)
+        return GateResult("C4", ratio <= max_nd,
+                          f"net cash ({ratio:.2f}x {label}); no interest expense to cover",
+                          ratio)
+
+    ok = ratio <= max_nd and cover >= min_cover
     return GateResult("C4", ok,
                       f"net debt/EBITDA {ratio:.2f}x ({label}, max {max_nd}x), "
-                      f"interest cover {_fmt(cover, False)} (min {min_cover})", ratio)
+                      f"interest cover {cover:.1f}x (min {min_cover})", ratio)
 
 
 def gate_C5_gross_profitability(s: AnnualSeries, sector: str) -> GateResult:
@@ -159,12 +173,28 @@ def gate_C6_accounting(s: AnnualSeries, sector: str) -> GateResult:
 
 
 def gate_C7_capital_allocation(s: AnnualSeries, sector: str) -> GateResult:
-    inc = M.incremental_roic(s)
-    if inc is None:
-        return GateResult("C7", None, "capital not retained, or inputs unavailable")
-    ok = inc >= config.C7_MIN_INCREMENTAL_ROIC
+    """
+    Two ways to allocate capital well, so two tests.
+
+    Retained: did the money kept earn a decent return? Returned: did shrinking
+    the capital base actually grow value per share? The old single-branch
+    version marked every capital-returning company unevaluable, which counted
+    as a failure — rejecting buyback discipline as if it were missing data.
+    """
+    r = M.capital_allocation(s)
+    if r is None:
+        return GateResult("C7", None, "capital-allocation inputs unavailable")
+    mode, value = r
+    if mode == "retained":
+        ok = value >= config.C7_MIN_INCREMENTAL_ROIC
+        return GateResult("C7", ok,
+                          f"incremental ROIC on retained capital {value:.1%} "
+                          f"vs {config.C7_MIN_INCREMENTAL_ROIC:.0%} min", value)
+    floor = config.C7_MIN_PER_SHARE_GROWTH_IF_RETURNING
+    ok = value >= floor
     return GateResult("C7", ok,
-                      f"incremental ROIC {inc:.1%} vs {config.C7_MIN_INCREMENTAL_ROIC:.0%} min", inc)
+                      f"capital returned, not retained; owner earnings/share CAGR "
+                      f"{value:.1%} vs {floor:.0%} min", value)
 
 
 def gate_C8_rollup(s: AnnualSeries, sector: str) -> GateResult:
@@ -201,6 +231,11 @@ def gate_module_roic(s: AnnualSeries, sector: str) -> GateResult:
         med = statistics.median(roes)
         return GateResult("M-ROIC", med >= mod["roe_median_min"],
                           f"median ROE {med:.1%} vs {mod['roe_median_min']:.0%} min", med)
+
+    if sector == "reit":
+        return _reit_gate(s, mod)
+    if sector == "utilities":
+        return _utility_gate(s, mod)
 
     cap_rnd = mod.get("capitalise_rnd", False)
     ys = M.common_years(s, ["operating_income", "total_equity"], 10)
@@ -263,12 +298,91 @@ def gate_module_sbc(s: AnnualSeries, sector: str) -> GateResult:
     return GateResult("M-SBC", r <= cap, f"SBC/revenue {r:.1%} vs {cap:.0%} max", r)
 
 
+def _reit_gate(s: AnnualSeries, mod: dict) -> GateResult:
+    """
+    REITs on XBRL-computable proxies. AFFO and same-store NOI are not GAAP
+    tags, so §M6's real tests stay manual — but a company being untestable on
+    two measures is no reason to reject it by throwing an exception, which is
+    what happened to all 357 REITs in the first run.
+    """
+    ys = M.common_years(s, ["net_income", "depreciation_amortisation",
+                            "diluted_shares", "total_assets"], 10)
+    if len(ys) < 5:
+        return GateResult("M-ROIC", None, "REIT: FFO history insufficient")
+    ffo_ps = {y: (s.series("net_income")[y] + abs(s.series("depreciation_amortisation")[y]))
+                 / s.series("diluted_shares")[y]
+              for y in ys if s.series("diluted_shares")[y] > 0}
+    if len(ffo_ps) < 5:
+        return GateResult("M-ROIC", None, "REIT: share history insufficient")
+    first, last = min(ffo_ps), max(ffo_ps)
+    growth = M.cagr(ffo_ps[first], ffo_ps[last], last - first)
+
+    fy = max(ys)
+    ta = s.series("total_assets")[fy]
+    debt = (s.series("long_term_debt").get(fy, 0.0) or 0.0) + \
+           (s.series("current_debt").get(fy, 0.0) or 0.0)
+    ltv = debt / ta if ta else None
+    cover = M.interest_cover(s, fy)
+
+    checks, ok = [], True
+    if growth is None:
+        return GateResult("M-ROIC", None, "REIT: FFO/share growth not computable")
+    checks.append(f"FFO/share CAGR {growth:.1%} (min {mod['ffo_per_share_cagr_min']:.0%})")
+    ok &= growth >= mod["ffo_per_share_cagr_min"]
+    if ltv is None:
+        return GateResult("M-ROIC", None, "REIT: leverage not computable")
+    checks.append(f"debt/assets {ltv:.0%} (max {mod['max_debt_to_assets']:.0%} book)")
+    ok &= ltv <= mod["max_debt_to_assets"]
+    if cover is None:
+        return GateResult("M-ROIC", None, "REIT: interest expense not reported")
+    checks.append(f"fixed-charge cover {cover:.1f}x (min {mod['min_fixed_charge_cover']})")
+    ok &= cover >= mod["min_fixed_charge_cover"]
+    return GateResult("M-ROIC", ok, "REIT: " + "; ".join(checks)
+                      + " | MANUAL: AFFO, same-store NOI, WALE", growth)
+
+
+def _utility_gate(s: AnnualSeries, mod: dict) -> GateResult:
+    """
+    Utilities on ROIC and ROE floors. The real §M6 moat test — achieved return
+    versus allowed return — is not in XBRL and must be checked by hand.
+    """
+    ys = M.common_years(s, ["operating_income", "total_equity"], 10)
+    roics = [r for r in (M.roic(s, y) for y in ys) if r is not None]
+    roes = [r for r in (M.roe(s, y) for y in ys) if r is not None]
+    if len(roics) < 5 or len(roes) < 5:
+        return GateResult("M-ROIC", None, "utility: ROIC/ROE history insufficient")
+    mr, me = statistics.median(roics), statistics.median(roes)
+    ok = mr >= mod["roic_median_min"] and me >= mod["roe_median_min"]
+    return GateResult("M-ROIC", ok,
+                      f"utility: median ROIC {mr:.1%} (min {mod['roic_median_min']:.0%}), "
+                      f"median ROE {me:.1%} (min {mod['roe_median_min']:.0%}) "
+                      f"| MANUAL: achieved vs allowed ROE, rate-base growth", mr)
+
+
+def gate_M4_loss_history(s: AnnualSeries, sector: str) -> GateResult:
+    """
+    §M4's most discriminating financial test: no annual loss in 20 years,
+    2008-09 included. Cheap to run and impossible to game.
+    """
+    if sector != "financials":
+        return GateResult("M-LOSS", True, "not applicable to this sector")
+    r = M.loss_years(s)
+    if r is None:
+        return GateResult("M-LOSS", None, "earnings history insufficient")
+    losses, span = r
+    cap = config.SECTOR_MODULES["financials"]["max_loss_years_in_20"]
+    return GateResult("M-LOSS", losses <= cap,
+                      f"{losses} loss-making year(s) in {span}y of history (max {cap})",
+                      float(losses))
+
+
 CORE_GATES = [
     gate_C1_cash_conversion, gate_C2_dilution, gate_C3_earnings_durability,
     gate_C4_leverage, gate_C5_gross_profitability, gate_C6_accounting,
     gate_C7_capital_allocation, gate_C8_rollup,
 ]
-MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc]
+MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc,
+                gate_M4_loss_history]
 
 
 def run_gates(s: AnnualSeries, ticker: str, sector: str) -> ScreenResult:
@@ -276,6 +390,14 @@ def run_gates(s: AnnualSeries, ticker: str, sector: str) -> ScreenResult:
     for fn in CORE_GATES + MODULE_GATES:
         try:
             res.gates.append(fn(s, sector))
-        except Exception as exc:  # a bad filing must not kill the run
-            res.gates.append(GateResult(fn.__name__, None, f"error: {exc}"))
+        except (KeyError, AttributeError, TypeError, NameError) as exc:
+            # A code defect, not a data gap. Recording these as "unevaluable"
+            # is how a missing config key silently rejected every REIT and
+            # utility in the first run while the summary reported success.
+            raise RuntimeError(
+                f"{fn.__name__} is broken for sector '{sector}': "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+        except Exception as exc:      # genuinely bad data must not kill the run
+            res.gates.append(GateResult(fn.__name__, None, f"data error: {exc}"))
     return res

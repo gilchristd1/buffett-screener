@@ -82,6 +82,11 @@ C8_MAX_GOODWILL_INTANGIBLES_SHARE = 0.40
 # Excused misses permitted across C1 and C3 combined (§2).
 MAX_EXCUSED_MISSES = 1
 
+# C7 when capital was RETURNED rather than retained: minimum owner-earnings-
+# per-share CAGR. Buying back stock is good capital allocation only if value
+# per share actually grew.
+C7_MIN_PER_SHARE_GROWTH_IF_RETURNING = 0.05
+
 # ------------------------------------------------------- sector leverage bands --
 # §4. (max_net_debt_to_ebitda, min_interest_cover, test_at_trough)
 LEVERAGE_BANDS = {
@@ -155,21 +160,41 @@ SECTOR_MODULES = {
         "capitalise_rnd": False,
     },
     "utilities": {
-        "min_achieved_vs_allowed_roe": 0.90,  # manual input
-        "rate_base_growth_min": 0.04,
+        # Achieved-vs-allowed ROE and rate-base growth are not in XBRL at all,
+        # so §M6's real moat test stays manual. These are the computable floors.
+        "roic_median_min": 0.05,          # regulated returns are low by design
+        "roic_every_year_min": 0.0,
+        "roic_every_year_lookback": 10,
+        "roe_median_min": 0.08,
+        "min_achieved_vs_allowed_roe": 0.90,   # manual
+        "rate_base_growth_min": 0.04,          # manual
         "growth_measure": "calendar",
         "capitalise_rnd": False,
+        "manual_checks": ["achieved vs allowed ROE", "rate-base growth",
+                          "regulatory jurisdiction quality"],
     },
     "reit": {
-        "affo_cagr_min": 0.03,
-        "same_store_noi_min": 0.02,
-        "max_ltv": 0.40,
+        # XBRL-computable proxies. AFFO and same-store NOI are not GAAP tags, so
+        # the real §M6 tests stay manual; these keep REITs in the funnel instead
+        # of crashing the gate engine, which is what happened before.
+        "roic_median_min": 0.04,          # REIT ROIC is structurally low
+        "roic_every_year_min": 0.0,
+        "roic_every_year_lookback": 10,
+        "ffo_per_share_cagr_min": 0.03,   # net income + D&A per share, an FFO proxy
+        "max_debt_to_assets": 0.60,       # BOOK LTV. §M6's 40% is on market value;
+                                          # book runs higher, so this is the
+                                          # equivalent, not a loosening
         "min_fixed_charge_cover": 2.5,
         "growth_measure": "calendar",
         "capitalise_rnd": False,
+        "manual_checks": ["AFFO per share", "same-store NOI", "WALE", "tenant credit"],
     },
     "financials": {
+        # Balance-sheet businesses only. Fee businesses (asset managers,
+        # exchanges, brokers, advisers) run the operating-company gates — §M4
+        # says so, and SIC routing in universe.py now enforces it.
         "roe_median_min": 0.12,
+        "max_loss_years_in_20": 0,        # §M4: a clean record through 2008-09
         "roa_min_banks": 0.010,
         "tbvps_cagr_min": 0.08,
         "no_loss_years_lookback": 20,

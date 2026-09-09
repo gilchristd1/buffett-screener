@@ -164,12 +164,19 @@ def net_debt(s: AnnualSeries, fy: int) -> float | None:
 
 
 def interest_cover(s: AnnualSeries, fy: int) -> float | None:
+    """
+    EBIT / interest expense, or None when interest expense is not reported.
+
+    None means "unknown", NOT "infinite". The previous version returned
+    math.inf on a missing tag, so a leverage gate was satisfied by the absence
+    of the debt-cost figure — 331 companies passed C4 that way, several
+    carrying real net debt. Every other gate fails closed on missing data;
+    this one failed open, which is the more dangerous direction.
+    """
     ebit = _get(s, "operating_income", fy)
     interest = _get(s, "interest_expense", fy)
-    if ebit is None:
+    if ebit is None or not interest:
         return None
-    if not interest:
-        return math.inf  # no interest expense reported: not a leverage risk
     return ebit / abs(interest)
 
 
@@ -233,10 +240,22 @@ def margin_stability(s: AnnualSeries, years: int = 10) -> float | None:
 
 
 # ------------------------------------------------- capital allocation --
-def incremental_roic(s: AnnualSeries, years: int = 10) -> float | None:
+def capital_allocation(s: AnnualSeries, years: int = 10) -> tuple[str, float] | None:
     """
-    C7: change in NOPAT over the period divided by capital retained over it.
-    What management actually earned on the money they kept.
+    C7, in two modes, because capital can be deployed in two directions.
+
+    RETAINED  — invested capital grew. Test the classic incremental ROIC:
+                change in NOPAT divided by the capital management kept.
+
+    RETURNED  — invested capital shrank, which is what buybacks and special
+                dividends do. The old version returned None here, and because
+                unevaluable counts as a failure the gate rejected 1,625
+                companies (55% of the universe) for the disciplined capital
+                allocation it exists to reward. Instead, test whether shrinking
+                the capital base grew value per share: owner-earnings-per-share
+                CAGR over the period.
+
+    Returns (mode, value) or None when the inputs are genuinely missing.
     """
     ys = common_years(s, ["operating_income", "total_equity"], years + 1)
     if len(ys) < 4:
@@ -246,11 +265,44 @@ def incremental_roic(s: AnnualSeries, years: int = 10) -> float | None:
     ic_first, ic_last = invested_capital(s, first), invested_capital(s, last)
     if None in (np_first, np_last, ic_first, ic_last):
         return None
+
     delta_ic = ic_last - ic_first
-    if delta_ic <= 0:
-        # Capital returned rather than retained: not a failure, not measurable here.
+    if delta_ic > 0:
+        return ("retained", (np_last - np_first) / delta_ic)
+
+    # Capital returned. Did value per share grow while the base shrank?
+    shares = s.series("diluted_shares")
+    oe_first, oe_last = owner_earnings(s, first), owner_earnings(s, last)
+    if oe_first is None or oe_last is None or first not in shares or last not in shares:
         return None
-    return (np_last - np_first) / delta_ic
+    if shares[first] <= 0 or shares[last] <= 0 or oe_first <= 0:
+        return None
+    ps_first, ps_last = oe_first / shares[first], oe_last / shares[last]
+    growth = cagr(ps_first, ps_last, last - first)
+    return ("returned", growth) if growth is not None else None
+
+
+def incremental_roic(s: AnnualSeries, years: int = 10) -> float | None:
+    """Retained-capital case only. Kept for callers that want the classic figure."""
+    r = capital_allocation(s, years)
+    return r[1] if r and r[0] == "retained" else None
+
+
+def loss_years(s: AnnualSeries, lookback: int = 20) -> tuple[int, int] | None:
+    """
+    (number of loss-making years, years of history) over the lookback.
+
+    §M4 calls a clean record through 2008-09 the single most discriminating
+    test available for a financial, and impossible to game. It needs only the
+    net income series, which is already extracted.
+    """
+    ser = s.series("net_income")
+    if not ser:
+        return None
+    ys = sorted(ser)[-lookback:]
+    if len(ys) < 10:
+        return None
+    return sum(1 for y in ys if ser[y] < 0), len(ys)
 
 
 def share_count_ratio(s: AnnualSeries, years: int = 5) -> float | None:
