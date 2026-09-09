@@ -138,7 +138,17 @@ jobs:
             echo
             if [ -f out/ranked.csv ]; then
               echo "- Ranked: $(( $(wc -l < out/ranked.csv) - 1 )) scored"
-              echo "- Clearing the owner-earnings hurdle: $(grep -c ',yes,' out/ranked.csv || echo 0)"
+              # Read the NAMED column. `grep -c ',yes,'` counted any row with a
+              # "yes" anywhere, so when the `priced` column was added run 4's
+              # summary reported 37 names clearing the hurdle when 2 did. A
+              # summary that is confidently wrong is worse than no summary.
+              # NB: a heredoc cannot be used here — inside a YAML block scalar
+              # the terminator stays indented and never closes the document.
+              python3 -c 'import csv;r=list(csv.DictReader(open("out/ranked.csv")));print("- Clearing the owner-earnings hurdle: %d" % sum(1 for x in r if x.get("clears_hurdle")=="yes"));print("- Price-comparable (score includes the valuation points): %d of %d" % (sum(1 for x in r if x.get("priced")=="yes"), len(r)))'
+            fi
+            if [ -f out/moat.csv ]; then
+              # Named column again, for the same reason as above.
+              python3 -c 'import csv;r=list(csv.DictReader(open("out/moat.csv")));from collections import Counter;c=Counter(x["label"] for x in r);print("- Moat durability: %d wide, %d narrow, %d uncertain" % (c["wide"], c["narrow"], c["uncertain"]))'
             fi
             echo
             echo '## Ranked queue'
@@ -159,7 +169,8 @@ jobs:
           # ATOMICALLY when any one is missing — "pathspec did not match" — and
           # then adds none of them. That is why ranked.csv never reached the repo
           # in run 3 even though it was written.
-          for f in universe.csv results.csv survivors.csv summary.md ranked.csv watchlist.csv; do
+          for f in universe.csv results.csv survivors.csv summary.md ranked.csv \
+                   watchlist.csv moat.csv sector_growth.csv; do
             [ -f "out/$f" ] && git add -f "out/$f" || echo "  (no out/$f this run)"
           done
           if git diff --cached --quiet; then
