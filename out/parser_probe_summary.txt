@@ -1,8 +1,8 @@
 EdgarTools: edgar 5.57.0
 access path: Company(cik).get_facts()
 companies probed: 30
-seconds per company: 0.38
-projected full-universe time: 13 min
+seconds per company: 0.44
+projected full-universe time: 16 min
 agree: 2473
 disagree: 597
 only edgartools: 48

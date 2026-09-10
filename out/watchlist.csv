@@ -9,7 +9,6 @@ DCI,DONALDSON Co INC,industrials,narrow,61.0,computed,0.38,62.9,44/70,yes,20/20,
 DXCM,DEXCOM INC,healthcare,narrow,63.0,computed,0.37,52.9,37/70,yes,20/20,,0.0186,0.0800,no,84.51,17.68,-1.992,-0.88,31890759056
 EME,"EMCOR Group, Inc.",industrials,narrow,79.0,computed,0.34,60.7,42/70,yes,20/20,VETO — above its own 10y multiple,0.0316,0.0800,no,748.33,277.90,-0.772,2.46,33008762969
 EW,Edwards Lifesciences Corp,healthcare,narrow,57.0,computed,0.39,52.1,36/70,yes,20/20,,0.0302,0.0800,no,86.77,25.56,-1.084,0.06,50014226065
-FIVE,"FIVE BELOW, INC",consumer,narrow,73.0,computed,0.35,70.7,50/70,yes,20/20,,0.0244,0.0800,no,241.28,65.35,-1.385,-0.10,13283437497
 FIX,COMFORT SYSTEMS USA INC,industrials,narrow,76.0,computed,0.35,53.6,38/70,yes,20/20,VETO — above its own 10y multiple,0.0095,0.0800,no,1590.81,179.02,-4.794,5.77,55987492578
 FSS,FEDERAL SIGNAL CORP /DE/,industrials,narrow,68.0,computed,0.36,57.1,40/70,yes,20/20,,0.0351,0.0800,no,113.46,46.45,-0.554,0.55,6925781128
 GGG,GRACO INC,industrials,narrow,73.0,computed,0.35,63.6,44/70,yes,20/20,,0.0434,0.0800,no,75.97,30.93,-0.587,-0.46,12303632206
@@ -20,8 +19,6 @@ IDXX,IDEXX LABORATORIES INC /DE,healthcare,narrow,73.0,computed,0.35,65.7,46/70,
 ISRG,INTUITIVE SURGICAL INC,healthcare,narrow,61.0,computed,0.38,55.7,39/70,yes,20/20,,0.0191,0.0800,no,360.46,75.64,-1.964,-0.72,127342598558
 ITT,ITT INC.,industrials,narrow,56.0,computed,0.39,51.4,36/70,yes,20/20,VETO — above its own 10y multiple,0.0308,0.0800,no,196.23,49.38,-1.432,1.93,17542961618
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,narrow,60.0,computed,0.38,60.7,42/70,yes,20/20,,0.0358,0.0800,no,251.06,109.52,-0.421,0.66,13684215219
-LII,LENNOX INTERNATIONAL INC,industrials,narrow,69.0,computed,0.36,78.6,55/70,yes,20/20,,0.0622,0.0800,no,372.62,273.26,0.130,-2.21,12967163906
-LOGI,LOGITECH INTERNATIONAL S.A.,software,wide,89.0,computed,0.32,77.1,54/70,yes,20/20,,0.0506,0.0600,no,99.77,55.62,-0.216,-0.32,14285899402
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,narrow,75.6,computed,0.35,66.4,42/64,yes,20/20,,0.0587,0.0800,no,163.09,109.26,0.028,-1.58,5739608464
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,narrow,64.0,computed,0.37,56.4,40/70,yes,20/20,,0.0650,0.0800,no,793.26,545.55,0.087,0.10,74530831476
 RMD,RESMED INC,healthcare,narrow,69.0,computed,0.36,60.0,42/70,yes,20/20,,0.0489,0.0800,no,219.58,123.48,-0.135,-1.61,31674921615

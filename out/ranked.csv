@@ -3,11 +3,8 @@ TOL,"Toll Brothers, Inc.",industrials,uncertain,51.0,computed,0.40,84.3,59/70,ye
 YUMC,"Yum China Holdings, Inc.",consumer,narrow,69.0,computed,0.36,83.6,58/70,yes,20/20,,0.0694,0.0800,no,42.29,31.39,0.141,-0.73,14482554884
 SFM,"Sprouts Farmers Market, Inc.",consumer,wide,89.0,computed,0.32,82.9,58/70,yes,20/20,,0.0564,0.0600,no,72.20,49.14,0.004,-0.62,6732478240
 ADBE,ADOBE INC.,software,wide,91.0,computed,0.32,78.6,55/70,yes,20/20,,0.0633,0.0600,yes,248.83,197.84,0.142,-2.38,98909925727
-LII,LENNOX INTERNATIONAL INC,industrials,narrow,69.0,computed,0.36,78.6,55/70,yes,20/20,,0.0622,0.0800,no,372.62,273.26,0.130,-2.21,12967163906
 GL,GLOBE LIFE INC.,financials,uncertain,34.4,computed,0.43,77.3,50/64,yes,20/20,,0.0700,0.0800,no,170.80,136.55,0.288,0.07,13125885782
-LOGI,LOGITECH INTERNATIONAL S.A.,software,wide,89.0,computed,0.32,77.1,54/70,yes,20/20,,0.0506,0.0600,no,99.77,55.62,-0.216,-0.32,14285899402
 ULTA,"Ulta Beauty, Inc.",consumer,wide,95.0,computed,0.31,77.1,54/70,yes,20/20,,0.0535,0.0600,no,535.63,358.53,-0.031,-0.16,22902184400
-FIVE,"FIVE BELOW, INC",consumer,narrow,73.0,computed,0.35,70.7,50/70,yes,20/20,,0.0244,0.0800,no,241.28,65.35,-1.385,-0.10,13283437497
 SEIC,SEI INVESTMENTS CO,fee_business,narrow,66.7,computed,0.37,68.0,44/64,yes,20/20,,0.0337,0.0800,no,106.77,39.64,-0.706,0.56,12814447659
 COST,COSTCO WHOLESALE CORP /NEW,consumer,wide,90.0,computed,0.32,67.9,48/70,yes,20/20,VETO — above its own 10y multiple,0.0189,0.0600,no,902.38,208.94,-1.937,1.18,400186405318
 CMI,CUMMINS INC,industrials,narrow,79.0,computed,0.34,67.1,47/70,yes,20/20,VETO — above its own 10y multiple,0.0387,0.0800,no,550.03,220.99,-0.638,2.04,75719601817

@@ -552,7 +552,7 @@ ADBE,ADOBE INC.,software,C6,True,,"MANUAL: check restatements, auditor change, 8
 ADBE,ADOBE INC.,software,C7,True,0.7850285854727339,incremental ROIC on retained capital 78.5% vs 10% min
 ADBE,ADOBE INC.,software,C8,True,0.4526715486845674,goodwill+intangibles 45.3% of assets; ROIC incl. goodwill 63.2%
 ADBE,ADOBE INC.,software,C9,True,0.12332786743764568,2Q to 2026-05-29: revenue +12.3% YoY; operating income +9.0% YoY; margin 35.8% vs 36.9%
-ADBE,ADOBE INC.,software,C10,True,,no overlay entry
+ADBE,ADOBE INC.,software,C10,True,,"guidance raised; CEO changed within 12 months; Q3 FY26 revenue $6.76bn +13%, ARR $27.5bn, 97% subscription. Guidance RAISED at "
 ADBE,ADOBE INC.,software,M-ROIC,True,0.4303581222234685,median ROIC 43.0% vs 20% (R&D capitalised); min of last 5y 37.4% vs 12%
 ADBE,ADOBE INC.,software,M-GROWTH,True,0.17359324714668167,revenue CAGR 17.4% (10y) vs 8% min
 ADBE,ADOBE INC.,software,M-SBC,True,0.08523599162985353,SBC/revenue 8.5% vs 10% max
@@ -11447,8 +11447,8 @@ FIVE,"FIVE BELOW, INC",consumer,C5,True,0.32898058567105637,gross profit/assets 
 FIVE,"FIVE BELOW, INC",consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 FIVE,"FIVE BELOW, INC",consumer,C7,True,0.25414722522025307,incremental ROIC on retained capital 25.4% vs 10% min
 FIVE,"FIVE BELOW, INC",consumer,C8,True,0.0,goodwill+intangibles 0.0% of assets
-FIVE,"FIVE BELOW, INC",consumer,C9,True,0.27522186631046575,2Q to 2026-08-01: revenue +27.5% YoY; operating income +316.2% YoY; margin 16.9% vs 5.2%
-FIVE,"FIVE BELOW, INC",consumer,C10,True,,no overlay entry
+FIVE,"FIVE BELOW, INC",consumer,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+FIVE,"FIVE BELOW, INC",consumer,C10,True,,"guidance raised; Q2 FY26 net sales $1.26bn +22.9%, comps +14.1%, guidance RAISED at both Q1 and Q"
 FIVE,"FIVE BELOW, INC",consumer,M-ROIC,True,0.30773519949797384,median ROIC 30.8% vs 15%; min of last 5y 19.0% vs 12%
 FIVE,"FIVE BELOW, INC",consumer,M-GROWTH,True,0.19066224836443824,revenue CAGR 19.1% (10y) vs 3% min
 FIVE,"FIVE BELOW, INC",consumer,M-SBC,True,,not applicable to this sector
@@ -13048,7 +13048,7 @@ GL,GLOBE LIFE INC.,financials,C6,True,,"MANUAL: check restatements, auditor chan
 GL,GLOBE LIFE INC.,financials,C7,True,0.5143253683223225,incremental ROIC on retained capital 51.4% vs 10% min
 GL,GLOBE LIFE INC.,financials,C8,True,0.015916495822701156,goodwill+intangibles 1.6% of assets
 GL,GLOBE LIFE INC.,financials,C9,True,0.06673174170723728,2Q to 2026-06-30: revenue +6.7% YoY
-GL,GLOBE LIFE INC.,financials,C10,True,,no overlay entry
+GL,GLOBE LIFE INC.,financials,C10,True,,"guidance raised; Q2 2026 revenue $1.60bn +8.0%, pre-tax income +13.3%; guidance RAISED at both Q1"
 GL,GLOBE LIFE INC.,financials,M-ROIC,True,0.19809175958181194,median ROE 19.8% vs 12% min
 GL,GLOBE LIFE INC.,financials,M-GROWTH,True,,no revenue growth floor for this sector
 GL,GLOBE LIFE INC.,financials,M-SBC,True,,not applicable to this sector
@@ -17879,8 +17879,8 @@ LII,LENNOX INTERNATIONAL INC,industrials,C5,True,0.4910220994475138,gross profit
 LII,LENNOX INTERNATIONAL INC,industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 LII,LENNOX INTERNATIONAL INC,industrials,C7,True,0.6074375184614574,incremental ROIC on retained capital 60.7% vs 10% min
 LII,LENNOX INTERNATIONAL INC,industrials,C8,True,0.18869126365819,goodwill+intangibles 18.9% of assets
-LII,LENNOX INTERNATIONAL INC,industrials,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
-LII,LENNOX INTERNATIONAL INC,industrials,C10,True,,no overlay entry
+LII,LENNOX INTERNATIONAL INC,industrials,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+LII,LENNOX INTERNATIONAL INC,industrials,C10,True,,guidance cut; 1 consecutive cut(s); FY26 adjusted EPS guidance CUT at Q2 from $23.50-25.00 to $23.00-24.00 (held at 
 LII,LENNOX INTERNATIONAL INC,industrials,M-ROIC,True,1.7328946556223896,median ROIC 173.3% vs 13%; min of last 10y 73.4% vs 0%
 LII,LENNOX INTERNATIONAL INC,industrials,M-GROWTH,True,0.05454023696773658,revenue CAGR 5.5% (peak-to-peak) vs 3% min
 LII,LENNOX INTERNATIONAL INC,industrials,M-SBC,True,,not applicable to this sector
@@ -18247,8 +18247,8 @@ LOGI,LOGITECH INTERNATIONAL S.A.,software,C5,True,0.5143288471748227,gross profi
 LOGI,LOGITECH INTERNATIONAL S.A.,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 LOGI,LOGITECH INTERNATIONAL S.A.,software,C7,True,2.361547646779167,incremental ROIC on retained capital 236.2% vs 10% min
 LOGI,LOGITECH INTERNATIONAL S.A.,software,C8,True,0.1241502078164771,goodwill+intangibles 12.4% of assets
-LOGI,LOGITECH INTERNATIONAL S.A.,software,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
-LOGI,LOGITECH INTERNATIONAL S.A.,software,C10,True,,no overlay entry
+LOGI,LOGITECH INTERNATIONAL S.A.,software,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+LOGI,LOGITECH INTERNATIONAL S.A.,software,C10,True,,guidance none; NO full-year guidance - withdrawn Apr 2025 on tariffs and never reinstated; guid
 LOGI,LOGITECH INTERNATIONAL S.A.,software,M-ROIC,True,0.3573015336058933,median ROIC 35.7% vs 20% (R&D capitalised); min of last 5y 22.2% vs 12%
 LOGI,LOGITECH INTERNATIONAL S.A.,software,M-GROWTH,True,0.09143303798092339,revenue CAGR 9.1% (10y) vs 8% min
 LOGI,LOGITECH INTERNATIONAL S.A.,software,M-SBC,True,0.019739840611209907,SBC/revenue 2.0% vs 10% max
@@ -18519,8 +18519,8 @@ LULU,lululemon athletica inc.,consumer,C5,True,0.7909548316885321,gross profit/a
 LULU,lululemon athletica inc.,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 LULU,lululemon athletica inc.,consumer,C7,True,0.49178295426709207,incremental ROIC on retained capital 49.2% vs 10% min
 LULU,lululemon athletica inc.,consumer,C8,True,0.022608467586161717,goodwill+intangibles 2.3% of assets
-LULU,lululemon athletica inc.,consumer,C9,False,0.7591120060596048,2Q to 2026-08-02: revenue -0.2% YoY; operating income -24.1% YoY; margin 14.9% vs 19.7% — earnings break
-LULU,lululemon athletica inc.,consumer,C10,False,,guidance cut; 2 consecutive cut(s); CEO changed within 12 months; FY26 guidance cut for the second consecutive year to a 5-7% revenue decline; Q2  — guidance cut in two consecutive quarters; management's own view of the year has been wrong twice
+LULU,lululemon athletica inc.,consumer,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+LULU,lululemon athletica inc.,consumer,C10,False,,guidance cut; 2 consecutive cut(s); CEO changed within 12 months; FY26 guidance cut for the second consecutive year to a 5-7% revenue decline; Q2  — flagged as disqualifying
 LULU,lululemon athletica inc.,consumer,M-ROIC,True,0.5764607138258566,median ROIC 57.6% vs 15%; min of last 5y 42.7% vs 12%
 LULU,lululemon athletica inc.,consumer,M-GROWTH,True,0.18343585382899352,revenue CAGR 18.3% (10y) vs 3% min
 LULU,lululemon athletica inc.,consumer,M-SBC,True,,not applicable to this sector
@@ -27240,7 +27240,7 @@ SEIC,SEI INVESTMENTS CO,fee_business,C6,True,,"MANUAL: check restatements, audit
 SEIC,SEI INVESTMENTS CO,fee_business,C7,True,0.1765382589101484,incremental ROIC on retained capital 17.7% vs 10% min
 SEIC,SEI INVESTMENTS CO,fee_business,C8,True,0.09225078093396201,goodwill+intangibles 9.2% of assets
 SEIC,SEI INVESTMENTS CO,fee_business,C9,True,0.13759006971542243,2Q to 2026-06-30: revenue +13.8% YoY; operating income +26.4% YoY; margin 30.6% vs 27.5%
-SEIC,SEI INVESTMENTS CO,fee_business,C10,True,,no overlay entry
+SEIC,SEI INVESTMENTS CO,fee_business,C10,True,,"guidance none; No formal numerical guidance is given. Q2 2026 revenue $641.6m +15%, operating i"
 SEIC,SEI INVESTMENTS CO,fee_business,M-ROIC,True,0.2659427570547831,"median ROE 26.6% vs 15% min (fee business — ROE, not ROIC)"
 SEIC,SEI INVESTMENTS CO,fee_business,M-GROWTH,True,0.05584689830765566,revenue CAGR 5.6% (10y) vs 4% min
 SEIC,SEI INVESTMENTS CO,fee_business,M-SBC,True,,not applicable to this sector
@@ -30280,7 +30280,7 @@ TOL,"Toll Brothers, Inc.",industrials,C6,True,,"MANUAL: check restatements, audi
 TOL,"Toll Brothers, Inc.",industrials,C7,True,0.26705761232489866,incremental ROIC on retained capital 26.7% vs 10% min
 TOL,"Toll Brothers, Inc.",industrials,C8,True,0.0,goodwill+intangibles 0.0% of assets
 TOL,"Toll Brothers, Inc.",industrials,C9,True,-0.027532553615282396,3Q to 2026-07-31: revenue -2.8% YoY; operating income -20.0% YoY; margin 12.6% vs 15.3% [cyclical bar]
-TOL,"Toll Brothers, Inc.",industrials,C10,True,,"guidance held; Q3 FY26 revenue $2.65bn vs $2.88bn and EPS $2.97 vs $3.73, adjusted gross margin"
+TOL,"Toll Brothers, Inc.",industrials,C10,True,,"guidance held; CEO changed within 12 months; Q3 FY26 revenue $2.65bn vs $2.88bn, EPS $2.97 vs $3.73, adjusted gross margin 25"
 TOL,"Toll Brothers, Inc.",industrials,M-ROIC,True,0.18023912476386222,median ROIC 18.0% vs 13%; min of last 10y 8.9% vs 0%
 TOL,"Toll Brothers, Inc.",industrials,M-GROWTH,True,0.07205449836456834,revenue CAGR 7.2% (peak-to-peak) vs 3% min
 TOL,"Toll Brothers, Inc.",industrials,M-SBC,True,,not applicable to this sector
@@ -31464,7 +31464,7 @@ ULTA,"Ulta Beauty, Inc.",consumer,C6,True,,"MANUAL: check restatements, auditor 
 ULTA,"Ulta Beauty, Inc.",consumer,C7,True,0.5976717467283998,incremental ROIC on retained capital 59.8% vs 10% min
 ULTA,"Ulta Beauty, Inc.",consumer,C8,True,0.03234911978265236,goodwill+intangibles 3.2% of assets
 ULTA,"Ulta Beauty, Inc.",consumer,C9,True,0.09982497273293034,2Q to 2026-08-01: revenue +10.0% YoY; operating income +10.9% YoY; margin 13.4% vs 13.2%
-ULTA,"Ulta Beauty, Inc.",consumer,C10,True,,no overlay entry
+ULTA,"Ulta Beauty, Inc.",consumer,C10,True,,"guidance raised; Q2 FY26 net sales $3.04bn +8.9%, comps +3.8%, operating margin 12.5% vs 12.4%. G"
 ULTA,"Ulta Beauty, Inc.",consumer,M-ROIC,True,0.49505239405969576,median ROIC 49.5% vs 15%; min of last 5y 48.9% vs 12%
 ULTA,"Ulta Beauty, Inc.",consumer,M-GROWTH,True,0.12187076411830722,revenue CAGR 12.2% (10y) vs 3% min
 ULTA,"Ulta Beauty, Inc.",consumer,M-SBC,True,,not applicable to this sector
