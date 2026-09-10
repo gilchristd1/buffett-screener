@@ -63,7 +63,7 @@ def _annual_entries(tag_values: dict[int, float], instant: bool):
 
 
 def make_companyfacts(cik: int, name: str, profitable=True, growth=1.06,
-                      margin_decay=1.0):
+                      margin_decay=1.0, recent_decline=1.0):
     """
     `margin_decay` < 1 erodes the profit margins year by year while revenue
     still grows — a business whose advantage is being competed away. Needed to
@@ -102,6 +102,38 @@ def make_companyfacts(cik: int, name: str, profitable=True, growth=1.06,
         gaap[tag] = {"units": {"USD": _annual_entries({y: rev[y] * frac for y in YEARS}, True)}}
     gaap["WeightedAverageNumberOfDilutedSharesOutstanding"] = {
         "units": {"shares": _annual_entries({y: 100e6 * (0.98 ** (y - 2015)) for y in YEARS}, False)}}
+
+    # Quarterly entries, exactly as a 10-Q emits them: the three-month period
+    # AND the year-to-date cumulative, both tagged. Q4 is never filed. Code that
+    # takes "the last four entries" splices a cumulative or skips Q4 and
+    # compares fifteen months to twelve.
+    #
+    # `recent_decline` shrinks the most recent four quarters, so a business that
+    # looks strong on ten years of annual filings can be falling apart now —
+    # the lululemon case that C9 exists to catch.
+    qflows = {"Revenues": 1.0, "OperatingIncomeLoss": 0.22}
+    for tag, frac in qflows.items():
+        entries = []
+        for y in YEARS:
+            ytd = 0.0
+            for qi, (qs, qe) in enumerate(
+                    [("01-01", "03-31"), ("04-01", "06-30"),
+                     ("07-01", "09-30"), ("10-01", "12-31")]):
+                base = rev[y] * frac / 4
+                if tag in PROFIT_TAGS or tag == "OperatingIncomeLoss":
+                    base *= decay[y]
+                if recent_decline != 1.0 and y == YEARS[-1]:
+                    base *= recent_decline
+                ytd += base
+                if qi == 3:
+                    continue          # Q4 is not filed on a 10-Q
+                entries.append({"val": base, "fy": y, "fp": f"Q{qi+1}",
+                                "form": "10-Q", "filed": f"{y}-{(qi+1)*3+1:02d}-15",
+                                "start": f"{y}-{qs}", "end": f"{y}-{qe}"})
+                entries.append({"val": ytd, "fy": y, "fp": f"Q{qi+1}",
+                                "form": "10-Q", "filed": f"{y}-{(qi+1)*3+1:02d}-15",
+                                "start": f"{y}-01-01", "end": f"{y}-{qe}"})
+        gaap[tag]["units"]["USD"].extend(entries)
 
     # NOTE: no "sic", no "exchanges", no "tickers" — exactly like the real file.
     return {
@@ -375,6 +407,51 @@ def main():
     failures += not check("owner-earnings yield is computable from a market cap",
                           y is not None and y > 0, f"{y:.1%}" if y else "None")
 
+    print("\n=== C9: the screen must see the business as it trades now ===")
+    steady = secdata.extract(make_companyfacts(80, "Steady Co"))
+    breaking = secdata.extract(make_companyfacts(81, "Breaking Co", recent_decline=0.62))
+
+    # The Q4 splice is the trap: Q4 is never filed on a 10-Q, and a 10-Q also
+    # reports the year-to-date cumulative alongside the quarter.
+    run = MM.recent_quarters(steady, "revenue")
+    failures += not check("only three-month periods are treated as quarters",
+                          run is not None and all(80 <= MM._days(a_, b_) <= 100
+                                                  for a_, b_ in zip(run, run[1:])),
+                          str(run))
+    failures += not check("year-to-date cumulatives are not counted as quarters",
+                          run is not None and len(run) <= 4, str(run))
+
+    cur = MM.current_vs_year_ago(steady)
+    failures += not check("a steady business shows growth, not a break",
+                          cur and cur["revenue_growth"] > 0, f"{cur['revenue_growth']:+.1%}")
+    curb = MM.current_vs_year_ago(breaking)
+    failures += not check("a collapsing quarter is visible year on year",
+                          curb and curb["revenue_growth"] < -0.05,
+                          f"{curb['revenue_growth']:+.1%}")
+
+    g_ok = {x.code: x for x in G.run_gates(steady, "OK", "consumer").gates}["C9"]
+    g_no = {x.code: x for x in G.run_gates(breaking, "NO", "consumer").gates}["C9"]
+    failures += not check("C9 passes a business still trading well", g_ok.passed is True,
+                          g_ok.reason)
+    failures += not check("C9 FAILS a business whose current trading has broken",
+                          g_no.passed is False, g_no.reason)
+
+    # The haircut, which is the half that changes the price rather than the list.
+    f_ok = MM.current_earnings_factor(steady)
+    f_no = MM.current_earnings_factor(breaking)
+    failures += not check("a growing business gets no upward credit (factor capped at 1)",
+                          f_ok == 1.0, f"{f_ok}")
+    failures += not check("a declining business is valued on the lower figure",
+                          f_no is not None and f_no < 0.8, f"{f_no:.2f}")
+    iv_ok = R.dcf_intrinsic_value(steady)
+    iv_no = R.dcf_intrinsic_value(breaking)
+    failures += not check("the DCF is cut by the same haircut, not just the yield",
+                          iv_no < iv_ok, f"{iv_no:,.0f} vs {iv_ok:,.0f}")
+    y_ok = R.owner_earnings_yield(steady, 5_000.0)
+    y_no = R.owner_earnings_yield(breaking, 5_000.0)
+    failures += not check("the owner-earnings yield no longer flatters a broken business",
+                          y_no < y_ok, f"{y_no:.1%} vs {y_ok:.1%}")
+
     print("\n=== fee businesses and media get their own gates ===")
     fee = secdata.extract(make_companyfacts(96, "Fee Co"))
     fg = {x.code: x for x in G.run_gates(fee, "FEE", "fee_business").gates}
@@ -386,6 +463,18 @@ def main():
                           fg["M-FEE-MARGIN"].passed is not None, fg["M-FEE-MARGIN"].reason)
     failures += not check("M-FEE-BS is evaluated, not skipped",
                           fg["M-FEE-BS"].passed is not None, fg["M-FEE-BS"].reason)
+    # Run 6 excluded Moody's at 0.59x net debt/revenue on a flat 0.50x cap I set
+    # with no calibration. A fee business whose revenue has never fallen has
+    # shown it can carry debt; one whose revenue swings with markets has not.
+    failures += not check("a fee business with never-falling revenue gets the stable cap",
+                          "stable cap" in fg["M-FEE-BS"].reason
+                          or fg["M-FEE-BS"].value <= 0, fg["M-FEE-BS"].reason)
+    # Revenue that actually falls year on year, which is what the stable-cap
+    # test reads — a quarterly-only shock leaves the annual record untouched.
+    swingy = secdata.extract(make_companyfacts(92, "Cyclical Mgr", growth=0.90))
+    sw = {x.code: x for x in G.run_gates(swingy, "SW", "fee_business").gates}["M-FEE-BS"]
+    failures += not check("a fee business with falling revenue keeps the tighter cap",
+                          "market-linked cap" in sw.reason or sw.value <= 0, sw.reason)
     failures += not check("M-ROIC uses ROE for a fee business",
                           "ROE" in fg["M-ROIC"].reason, fg["M-ROIC"].reason)
     failures += not check("the 20-year loss test applies to fee businesses too",
