@@ -255,11 +255,42 @@ def gate_C9_current_trading(s: AnnualSeries, sector: str) -> GateResult:
         bits.append(f"margin {cur['margin_now']:.1%} vs {cur['margin_then']:.1%}")
     note = "; ".join(bits)
 
+    cyclical = sector in config.C9_CYCLICAL_MODULES
+    floor = (config.C9_MIN_OPERATING_INCOME_RATIO_CYCLICAL if cyclical
+             else config.C9_MIN_OPERATING_INCOME_RATIO)
+    if cyclical:
+        note += " [cyclical bar]"
+
     if g < -config.C9_MAX_REVENUE_DECLINE:
         return GateResult("C9", False, f"{note} — revenue break", g)
-    if r is not None and r < config.C9_MIN_OPERATING_INCOME_RATIO:
+    if r is not None and r < floor:
         return GateResult("C9", False, f"{note} — earnings break", r)
     return GateResult("C9", True, note, g)
+
+
+# Loaded once per run by run_gates' caller; empty when no overlay.csv exists.
+OVERLAY: dict[str, dict] = {}
+
+
+def gate_C10_forward_flags(s: AnnualSeries, sector: str,
+                           ticker: str = "") -> GateResult:
+    """
+    C10: dated facts from outside the filings — guidance revisions, a change of
+    chief executive, a live legal or regulatory matter.
+
+    Nothing here is a forecast. The blocking condition is guidance cut in two
+    consecutive quarters, which is not an opinion about the future but a record
+    of management having been wrong about it twice. Run 7 is why this exists:
+    C9 measured lululemon on filed quarters, it passed by a percentage point,
+    and the fact that full-year guidance had by then been cut twice was
+    invisible to every gate in this file.
+    """
+    import overlay as OV
+    row = OVERLAY.get(ticker.upper())
+    blocks, note = OV.verdict(row)
+    if row is None:
+        return GateResult("C10", True, note)
+    return GateResult("C10", not blocks, note)
 
 
 def gate_module_roic(s: AnnualSeries, sector: str) -> GateResult:
@@ -512,6 +543,7 @@ CORE_GATES = [
     gate_C1_cash_conversion, gate_C2_dilution, gate_C3_earnings_durability,
     gate_C4_leverage, gate_C5_gross_profitability, gate_C6_accounting,
     gate_C7_capital_allocation, gate_C8_rollup, gate_C9_current_trading,
+    gate_C10_forward_flags,
 ]
 MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc,
                 gate_M4_loss_history, gate_M_fee_margin, gate_M_fee_balance_sheet]
@@ -521,7 +553,10 @@ def run_gates(s: AnnualSeries, ticker: str, sector: str) -> ScreenResult:
     res = ScreenResult(ticker=ticker, name=s.name, sector=sector)
     for fn in CORE_GATES + MODULE_GATES:
         try:
-            res.gates.append(fn(s, sector))
+            # C10 is the only gate that needs to know which company it is —
+            # everything else works off the series alone.
+            res.gates.append(fn(s, sector, ticker) if fn is gate_C10_forward_flags
+                             else fn(s, sector))
         except (KeyError, AttributeError, TypeError, NameError) as exc:
             # A code defect, not a data gap. Recording these as "unevaluable"
             # is how a missing config key silently rejected every REIT and

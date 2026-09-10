@@ -122,6 +122,11 @@ def rank() -> None:
         sys.exit("survivors.csv is empty — nothing to rank.")
 
     import moat as MO
+    import overlay as OV
+
+    overlay_rows = OV.load(Path("overlay.csv"))
+    if overlay_rows:
+        print(f"  forward overlay: {len(overlay_rows)} entries feeding the valuation cap")
 
     # moats.csv is an override now, not the source. Absent, every company is
     # scored on its own record rather than every company defaulting to "narrow".
@@ -162,6 +167,7 @@ def rank() -> None:
         shares = float(r["shares"]) if r.get("shares") else None
 
         dur, dur_comps, dur_avail = MO.durability(s, module, bench.get(module))
+        ov_row = overlay_rows.get(t_)
         if t_ in overrides:
             moat = overrides[t_]
             mos = config.MARGIN_OF_SAFETY.get(moat, config.MARGIN_OF_SAFETY["uncertain"])
@@ -171,8 +177,9 @@ def rank() -> None:
             mos = MO.margin_of_safety(dur, dur_avail)
             credit, source = MO.grants_quality_credit(dur, dur_avail), "computed"
 
-        oey = R.owner_earnings_yield(s, mcap) if mcap else None
-        iv = R.dcf_intrinsic_value(s)
+        guided = OV.earnings_factor(ov_row)
+        oey = R.owner_earnings_yield(s, mcap, guided) if mcap else None
+        iv = R.dcf_intrinsic_value(s, guided)
         mvh = R.multiple_vs_history(s, mcap, closes.get(t_)) if mcap else None
         bp = R.buy_price(iv, shares, moat, mos) if (iv and shares) else None
         price = (mcap / shares) if (mcap and shares) else None
@@ -327,6 +334,12 @@ def screen() -> None:
         print("No bulk zip found — falling back to the per-CIK API (slow).")
 
     import metrics as M
+    import overlay as OV
+
+    # Facts from outside the filings, maintained by hand between runs.
+    gates.OVERLAY = OV.load(Path("overlay.csv"))
+    print(f"  forward overlay: {len(gates.OVERLAY)} entr{'y' if len(gates.OVERLAY)==1 else 'ies'}"
+          + ("" if gates.OVERLAY else " — C10 will pass everything"))
 
     OUT.mkdir(exist_ok=True)
     results, survivors = [], []

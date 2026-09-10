@@ -1,2 +1,5 @@
 requests>=2.31
 yfinance>=0.2.40
+# Probe only (probe_edgar.py). Not yet on the critical path — the screen still
+# runs on the hand-written parser in secdata.py until the probe says otherwise.
+edgartools>=4.0

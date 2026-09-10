@@ -94,7 +94,23 @@ C7_MIN_INCREMENTAL_ROIC = 0.10
 # a company was up to fifteen months stale. These test the latest filed
 # quarters against the same quarters a year earlier.
 C9_MAX_REVENUE_DECLINE = 0.05        # >5% down year on year is a break
-C9_MIN_OPERATING_INCOME_RATIO = 0.75 # >25% down year on year is a break
+#
+# Recalibrated after run 7, against the distribution rather than by guess.
+# lululemon passed at -24.1% operating income against a -25% bar — one
+# percentage point, which is what a threshold set by intuition looks like when
+# it meets real data. Among companies clearing every OTHER gate, the 10th
+# percentile of year-on-year operating income growth is -4.0% and the median is
+# +14.3%; lululemon at -24.1% and Toll Brothers at -20.0% were the two worst in
+# the cohort by a wide margin, not marginal cases.
+C9_MIN_OPERATING_INCOME_RATIO = 0.875   # >12.5% down is a break
+
+# Cyclicals are the exception, and deliberately so. A homebuilder earning 20%
+# less than last year mid-cycle is behaving normally, not breaking; §M2 already
+# measures these sectors peak-to-peak for the same reason. For them the haircut
+# does the work — the valuation is cut to current earning power — and only a
+# severe fall excludes.
+C9_CYCLICAL_MODULES = {"industrials", "energy"}
+C9_MIN_OPERATING_INCOME_RATIO_CYCLICAL = 0.70
 C9_ENABLED = True
 # What to do when a company has no parseable quarterly filings.
 #

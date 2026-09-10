@@ -224,7 +224,7 @@ def main():
         os.chdir(work)
         for f in ["config.py", "secdata.py", "metrics.py", "gates.py",
                   "universe.py", "run_screen.py", "screener_import.py",
-                  "rank.py", "moat.py"]:
+                  "rank.py", "moat.py", "overlay.py"]:
             shutil.copy(ROOT / f, work / f)
         os.environ["SEC_USER_AGENT"] = "Test User test@example.com"
         n = U.build(work / "out", work / "data" / "companyfacts.zip",
@@ -406,6 +406,41 @@ def main():
     y = R.owner_earnings_yield(good, 1_000.0)
     failures += not check("owner-earnings yield is computable from a market cap",
                           y is not None and y > 0, f"{y:.1%}" if y else "None")
+
+    print("\n=== C10: dated facts from outside the filings ===")
+    import overlay as OV
+    steady0 = secdata.extract(make_companyfacts(85, "Overlay Co"))
+    G.OVERLAY = {}
+    g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
+    failures += not check("no overlay entry never blocks a company",
+                          g.passed is True, g.reason)
+
+    # Run 7: lululemon passed C9 by one percentage point while its management
+    # had already cut full-year guidance twice. Two cuts is the blocking fact.
+    G.OVERLAY = {"OVR": {"ticker": "OVR", "guidance": "cut", "consecutive_cuts": "2",
+                         "severity": "watch", "issue": "full-year guidance cut twice"}}
+    g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
+    failures += not check("two consecutive guidance cuts block", g.passed is False, g.reason)
+    G.OVERLAY = {"OVR": {"ticker": "OVR", "guidance": "cut", "consecutive_cuts": "1",
+                         "severity": "watch"}}
+    g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
+    failures += not check("one cut is recorded but does not block", g.passed is True, g.reason)
+    G.OVERLAY = {"OVR": {"ticker": "OVR", "severity": "veto", "issue": "regulator action"}}
+    g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
+    failures += not check("an explicit veto blocks", g.passed is False, g.reason)
+    G.OVERLAY = {}
+
+    # Guidance caps the valuation base, and only ever downward.
+    f_down = OV.earnings_factor({"guided_fy_earnings_change": "-0.40"})
+    f_up = OV.earnings_factor({"guided_fy_earnings_change": "0.30"})
+    failures += not check("guidance below last year cuts the valuation base",
+                          abs(f_down - 0.60) < 1e-9, f"{f_down}")
+    failures += not check("guidance above last year buys no credit",
+                          f_up == 1.0, f"{f_up}")
+    iv_plain = R.dcf_intrinsic_value(steady0)
+    iv_guided = R.dcf_intrinsic_value(steady0, 0.60)
+    failures += not check("the DCF honours guided earnings",
+                          iv_guided < iv_plain, f"{iv_guided:,.0f} vs {iv_plain:,.0f}")
 
     print("\n=== C9: the screen must see the business as it trades now ===")
     steady = secdata.extract(make_companyfacts(80, "Steady Co"))

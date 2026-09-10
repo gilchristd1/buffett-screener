@@ -198,7 +198,8 @@ def is_price_comparable(components: list[tuple]) -> bool:
 
 
 # ------------------------------------------------------------ valuation --
-def normalised_owner_earnings(s: secdata.AnnualSeries) -> tuple[float, float] | None:
+def normalised_owner_earnings(s: secdata.AnnualSeries,
+                              guided_factor: float | None = None) -> tuple[float, float] | None:
     """
     (owner earnings used for valuation, haircut factor applied).
 
@@ -215,15 +216,21 @@ def normalised_owner_earnings(s: secdata.AnnualSeries) -> tuple[float, float] | 
         return None
     factor = M.current_earnings_factor(s)
     factor = 1.0 if factor is None else factor
+    # Management's own guided change, where the overlay carries one. The LOWER
+    # of the two applies: value a company on the worse of what it is currently
+    # earning and what its own management says it will earn.
+    if guided_factor is not None:
+        factor = min(factor, guided_factor)
     return statistics.median(oes) * factor, factor
 
 
-def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float) -> float | None:
+def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float,
+                         guided_factor: float | None = None) -> float | None:
     """Lens A: current-adjusted owner earnings over enterprise value."""
     ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
     if not ys or not market_cap:
         return None
-    got = normalised_owner_earnings(s)
+    got = normalised_owner_earnings(s, guided_factor)
     if not got:
         return None
     oe, _ = got
@@ -231,7 +238,8 @@ def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float) -> float | 
     return oe / ev if ev and ev > 0 else None
 
 
-def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
+def dcf_intrinsic_value(s: secdata.AnnualSeries,
+                        guided_factor: float | None = None) -> float | None:
     """
     Lens B: two-stage DCF on owner earnings, with growth FADING to terminal.
 
@@ -258,8 +266,11 @@ def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
     # company has already stopped earning is the single largest way this model
     # can be wrong, and it is wrong in the direction that manufactures bargains.
     factor = M.current_earnings_factor(s)
-    if factor is not None:
-        base *= factor
+    if factor is None:
+        factor = 1.0
+    if guided_factor is not None:
+        factor = min(factor, guided_factor)
+    base *= factor
     first, last = min(oes), max(oes)
     hist = M.cagr(oes[first], oes[last], last - first) or 0.0
     g = max(0.0, min(hist, 0.10))
