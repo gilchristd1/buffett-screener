@@ -218,8 +218,8 @@ def main():
                               "EXCLUDE_REITS_AND_UTILITIES" in (U.excluded_by_sic("4911") or ""))
         failures += not check("bank classified as financials", got.get("T3") == "financials")
         failures += not check("software classified as software", got.get("T2") == "software")
-        failures += not check("fee business routed off the bank track",
-                              got.get("T9") == "consumer", str(got.get("T9")))
+        failures += not check("fee business gets its own module, not a borrowed one",
+                              got.get("T9") == "fee_business", str(got.get("T9")))
         failures += not check("share classes deduped to one row per company",
                               sum(1 for r in rows if r["cik"] == "10") == 1,
                               f"{sum(1 for r in rows if r['cik']=='10')} rows for CIK 10")
@@ -375,6 +375,36 @@ def main():
     failures += not check("owner-earnings yield is computable from a market cap",
                           y is not None and y > 0, f"{y:.1%}" if y else "None")
 
+    print("\n=== fee businesses and media get their own gates ===")
+    fee = secdata.extract(make_companyfacts(96, "Fee Co"))
+    fg = {x.code: x for x in G.run_gates(fee, "FEE", "fee_business").gates}
+    failures += not check("C5 does not reject a fee business it cannot measure",
+                          fg["C5"].passed is True, fg["C5"].reason)
+    failures += not check("C4 defers to the fee balance-sheet test",
+                          fg["C4"].passed is True, fg["C4"].reason)
+    failures += not check("M-FEE-MARGIN is evaluated, not skipped",
+                          fg["M-FEE-MARGIN"].passed is not None, fg["M-FEE-MARGIN"].reason)
+    failures += not check("M-FEE-BS is evaluated, not skipped",
+                          fg["M-FEE-BS"].passed is not None, fg["M-FEE-BS"].reason)
+    failures += not check("M-ROIC uses ROE for a fee business",
+                          "ROE" in fg["M-ROIC"].reason, fg["M-ROIC"].reason)
+    failures += not check("the 20-year loss test applies to fee businesses too",
+                          fg["M-LOSS"].passed is not None, fg["M-LOSS"].reason)
+
+    # The two gates must stay inert everywhere else.
+    cg = {x.code: x for x in G.run_gates(good, "CON", "consumer").gates}
+    failures += not check("the fee gates do not fire on a consumer company",
+                          cg["M-FEE-MARGIN"].passed is True and cg["M-FEE-BS"].passed is True)
+
+    # Media: the 6% grower the New York Times failed on must now pass.
+    nyt = secdata.extract(make_companyfacts(93, "Legacy Media Co", growth=1.06))
+    mg = {x.code: x for x in G.run_gates(nyt, "NYT", "media").gates}
+    sg = {x.code: x for x in G.run_gates(nyt, "NYT", "software").gates}
+    failures += not check("6% revenue growth fails the software floor",
+                          sg["M-GROWTH"].passed is False, sg["M-GROWTH"].reason)
+    failures += not check("...and passes the media floor",
+                          mg["M-GROWTH"].passed is True, mg["M-GROWTH"].reason)
+
     print("\n=== Lens C must not call every growing company cheap ===")
     # Run 4: 34 of 37 priced survivors scored negative, median z -0.79. Holding
     # EV constant while EBIT grows makes the latest year the minimum of the
@@ -458,9 +488,15 @@ def main():
                           not MO.grants_quality_credit(95.0, available=30))
     failures += not check("a high score on full coverage does grant the credit",
                           MO.grants_quality_credit(95.0, available=100))
+    # Read the thresholds from config rather than hardcoding them, so a
+    # recalibration cannot silently invalidate the test.
+    W, N = config.DURABILITY_WIDE_MIN, config.DURABILITY_NARROW_MIN
     failures += not check("labels follow the configured thresholds",
-                          MO.label(75.0) == "wide" and MO.label(55.0) == "narrow"
-                          and MO.label(20.0) == "uncertain")
+                          MO.label(W) == "wide" and MO.label(W - 1) == "narrow"
+                          and MO.label(N) == "narrow" and MO.label(N - 1) == "uncertain",
+                          f"wide>={W}, narrow>={N}")
+    failures += not check("the wide bar is strict enough to mean something",
+                          W >= 75, f"DURABILITY_WIDE_MIN={W}")
 
     # The benchmark must not be built from a handful of names.
     thin = MO.sector_medians([("consumer", 0.05)] * 5)
