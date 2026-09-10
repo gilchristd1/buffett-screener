@@ -46,6 +46,7 @@ COMPARE = ["revenue", "operating_income", "net_income", "total_assets",
            "depreciation_amortisation", "diluted_shares"]
 
 SAMPLE = 30          # enough to be informative, small enough to stay cheap
+SCHEMA_SEEN: dict[str, str] = {}   # field -> what the dataframe actually looks like
 TOLERANCE = 0.005    # 0.5% — rounding and restatement noise, not a disagreement
 
 
@@ -87,6 +88,60 @@ def _facts_via_edgar(edgar, cik: int):
     return None, None, attempts
 
 
+def _describe(df, field: str, concept: str) -> str:
+    """
+    Dump the shape of what EdgarTools actually returns.
+
+    Probe v1 guessed the schema and guessed wrong. It filtered on a `form`
+    column and nothing else, so quarterly facts inside annual filings were read
+    as annual values: 19% of the disagreements it reported were EdgarTools
+    figures roughly a quarter of the current parser's, which is not a
+    disagreement, it is a period-length error in the probe. Agilent's 2015
+    operating income came back as 131m against 522m — one quarter of four.
+    Nothing about EdgarTools could be judged from that run.
+
+    So this version reports the schema before comparing anything.
+    """
+    cols = list(df.columns)
+    head = df.head(2).to_dict("records") if len(df) else []
+    return (f"{field} via {concept}: {len(df)} rows\n"
+            f"    columns: {cols}\n"
+            f"    sample:  {head}\n")
+
+
+def _annual_rows(df, cols: dict):
+    """
+    Keep only ~12-month periods, the way secdata._is_annual_period does.
+
+    Form alone is not enough: a 10-K carries quarterly-duration facts as well
+    as annual ones, which is precisely what probe v1 missed.
+    """
+    from datetime import date
+    startcol = cols.get("period_start") or cols.get("start") or cols.get("start_date")
+    endcol = cols.get("period_end") or cols.get("end") or cols.get("date") or cols.get("end_date")
+    fpcol = cols.get("fiscal_period") or cols.get("fp")
+    out = []
+    for _, row in df.iterrows():
+        try:
+            end = str(row[endcol])[:10]
+            if startcol:
+                s = str(row[startcol])[:10]
+                y1, m1, d1 = (int(x) for x in s.split("-"))
+                y2, m2, d2 = (int(x) for x in end.split("-"))
+                days = (date(y2, m2, d2) - date(y1, m1, d1)).days
+                if not (350 <= days <= 380):
+                    continue
+            elif fpcol:
+                if str(row[fpcol]).upper() not in ("FY", "ANNUAL"):
+                    continue
+            else:
+                continue      # cannot tell the period length — do not guess
+            out.append((end, row))
+        except Exception:
+            continue
+    return out
+
+
 def _series_from_edgar(facts_obj) -> dict[str, dict[int, float]]:
     """
     Pull the comparable fields out of whatever EdgarTools returns.
@@ -117,23 +172,28 @@ def _series_from_edgar(facts_obj) -> dict[str, dict[int, float]]:
                 continue
             got: dict[int, float] = {}
             cols = {c.lower(): c for c in df.columns}
-            endcol = cols.get("period_end") or cols.get("end") or cols.get("date")
+            if field not in SCHEMA_SEEN:
+                SCHEMA_SEEN[field] = _describe(df, field, concept)
             valcol = cols.get("value") or cols.get("val") or cols.get("numeric_value")
             formcol = cols.get("form")
-            if not endcol or not valcol:
+            filedcol = cols.get("filed") or cols.get("filing_date")
+            if not valcol:
                 continue
-            for _, row in df.iterrows():
+            best: dict[int, tuple[str, float]] = {}
+            for end, row in _annual_rows(df, cols):
                 try:
-                    if formcol and str(row[formcol]) != "10-K":
+                    if formcol and str(row[formcol]) not in ("10-K", "10-K/A"):
                         continue
-                    end = str(row[endcol])[:10]
                     fy = secdata._fiscal_year_of(end)
                     v = row[valcol]
                     if fy is None or v is None:
                         continue
-                    got[fy] = float(v)
+                    filed = str(row[filedcol]) if filedcol else ""
+                    if fy not in best or filed > best[fy][0]:
+                        best[fy] = (filed, float(v))
                 except Exception:
                     continue
+            got = {fy: v for fy, (_, v) in best.items()}
             if got:
                 out[field] = got
                 break
@@ -214,7 +274,22 @@ def main() -> int:
     print(f"  values agreeing:    {agree:,}")
     print(f"  values DISAGREEING: {differ:,}")
     print(f"  only EdgarTools has:{missing_mine:,}   only current parser has: {missing_theirs:,}")
+    # Committed, because run.log is not. Probe v1's timing and counts went only
+    # to the log and were therefore unreadable after the run.
+    with open(OUT / "parser_probe_summary.txt", "w") as fh:
+        fh.write(f"EdgarTools: {note}\n")
+        fh.write(f"access path: {path_used}\n")
+        fh.write(f"companies probed: {len(timings)}\n")
+        fh.write(f"seconds per company: {per:.2f}\n")
+        fh.write(f"projected full-universe time: {per * 2150 / 60:.0f} min\n")
+        fh.write(f"agree: {agree}\ndisagree: {differ}\n")
+        fh.write(f"only edgartools: {missing_mine}\nonly current parser: {missing_theirs}\n")
+        fh.write("\n--- dataframe schema as returned ---\n")
+        for k, v in SCHEMA_SEEN.items():
+            fh.write(f"  {v}")
+
     print(f"\n  detail -> {OUT / 'parser_probe.csv'}")
+    print(f"  schema and timing -> {OUT / 'parser_probe_summary.txt'}")
     if differ or missing_mine:
         print("  Every disagreement is a bug in one parser or the other. Read them "
               "before swapping anything.")
