@@ -169,19 +169,32 @@ def total_score(components: list[tuple]) -> tuple[float, float, float]:
     return (100.0 * earned / available if available else 0.0), earned, available
 
 
+VALUATION_COMPONENTS = {"Owner-earnings yield", "Discount to intrinsic value",
+                        "Multiple vs own 10-year history"}
+
+
+def valuation_coverage(components: list[tuple]) -> float:
+    """Valuation points that could actually be scored, out of VALUATION_POINTS."""
+    return sum(c[2] for c in components if c[0] in VALUATION_COMPONENTS)
+
+
 def is_price_comparable(components: list[tuple]) -> bool:
     """
-    True only when the valuation components could actually be scored.
+    True when the company was actually judged on price.
 
     Normalising over available points is right for tag gaps, but it quietly
     makes an unpriced company look comparable to a priced one: in run 3 Alphabet
     ranked 8th on 40/50 points with all twenty valuation points simply absent.
-    A score that omits price is not the same measurement, and the ranking has to
-    say so rather than interleave them.
+    A score that omits price is not the same measurement.
+
+    The test is the OWNER-EARNINGS YIELD, not all twenty points. Requiring the
+    full twenty was too strict once Lens C started returning "unavailable"
+    honestly: in run 5 it demoted TJX — which has a market cap and a yield and
+    was missing only the 4-point multiple-vs-history component — into the same
+    bucket as three companies with no price at all. Yield is the lens §7 calls
+    the gate; the rest is reported as coverage.
     """
-    val = {"Owner-earnings yield", "Discount to intrinsic value",
-           "Multiple vs own 10-year history"}
-    return sum(c[2] for c in components if c[0] in val) == VALUATION_POINTS
+    return any(c[0] == "Owner-earnings yield" and c[2] > 0 for c in components)
 
 
 # ------------------------------------------------------------ valuation --

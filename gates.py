@@ -232,6 +232,21 @@ def gate_module_roic(s: AnnualSeries, sector: str) -> GateResult:
         return GateResult("M-ROIC", med >= mod["roe_median_min"],
                           f"median ROE {med:.1%} vs {mod['roe_median_min']:.0%} min", med)
 
+    if sector == "fee_business":
+        # ROE, not ROIC. A fee business often holds more cash than equity, and
+        # invested_capital() correctly refuses to return a negative capital
+        # base — which would have made the gate unevaluable for exactly the
+        # net-cash balance sheets M-FEE-BS is designed to reward.
+        ys = sorted(s.series("net_income"))[-10:]
+        roes = [r for r in (M.roe(s, y) for y in ys) if r is not None]
+        if len(roes) < 5:
+            return GateResult("M-ROIC", None, "ROE history insufficient")
+        med = statistics.median(roes)
+        floor = mod["roe_median_min"]
+        return GateResult("M-ROIC", med >= floor,
+                          f"median ROE {med:.1%} vs {floor:.0%} min "
+                          f"(fee business — ROE, not ROIC)", med)
+
     if sector == "reit":
         return _reit_gate(s, mod)
     if sector == "utilities":
@@ -359,18 +374,71 @@ def _utility_gate(s: AnnualSeries, mod: dict) -> GateResult:
                       f"| MANUAL: achieved vs allowed ROE, rate-base growth", mr)
 
 
+def gate_M_fee_margin(s: AnnualSeries, sector: str) -> GateResult:
+    """
+    M-FEE-MARGIN: a fee business earns its keep on operating margin.
+
+    It replaces the gross-profitability gate, which cannot be computed for a
+    company that reports no cost of revenue. Tested on the MEDIAN of ten years,
+    not the latest, because fee revenue is levered to markets and the latest
+    year flatters in a bull market.
+    """
+    mod = config.SECTOR_MODULES.get(sector, {})
+    floor = mod.get("operating_margin_min")
+    if floor is None:
+        return GateResult("M-FEE-MARGIN", True, "not applicable to this sector")
+    ys = M.common_years(s, ["operating_income", "revenue"], 10)
+    margins = [s.series("operating_income")[y] / s.series("revenue")[y]
+               for y in ys if s.series("revenue")[y]]
+    if len(margins) < 5:
+        return GateResult("M-FEE-MARGIN", None, "operating margin history insufficient")
+    med = statistics.median(margins)
+    return GateResult("M-FEE-MARGIN", med >= floor,
+                      f"median operating margin {med:.1%} vs {floor:.0%} min", med)
+
+
+def gate_M_fee_balance_sheet(s: AnnualSeries, sector: str) -> GateResult:
+    """
+    M-FEE-BS: a fee business should not be carrying debt.
+
+    There is no asset base to finance, so leverage here is either an acquisition
+    hangover or a shareholder-return policy borrowing against a cyclical revenue
+    line. Measured against REVENUE rather than EBITDA — EBITDA for an asset
+    manager swings with markets, and dividing by it in a bad year manufactures a
+    leverage crisis that is really a revenue dip.
+    """
+    mod = config.SECTOR_MODULES.get(sector, {})
+    cap = mod.get("max_net_debt_to_revenue")
+    if cap is None:
+        return GateResult("M-FEE-BS", True, "not applicable to this sector")
+    ys = M.common_years(s, ["revenue", "total_equity"], 3)
+    if not ys:
+        return GateResult("M-FEE-BS", None, "revenue history unavailable")
+    fy = ys[-1]
+    nd, rev = M.net_debt(s, fy), s.series("revenue").get(fy)
+    if nd is None or not rev:
+        return GateResult("M-FEE-BS", None, "net debt or revenue unavailable")
+    ratio = nd / rev
+    if ratio <= 0:
+        return GateResult("M-FEE-BS", True, f"net cash ({ratio:.2f}x revenue)", ratio)
+    return GateResult("M-FEE-BS", ratio <= cap,
+                      f"net debt {ratio:.2f}x revenue vs {cap:.2f}x max", ratio)
+
+
 def gate_M4_loss_history(s: AnnualSeries, sector: str) -> GateResult:
     """
     §M4's most discriminating financial test: no annual loss in 20 years,
     2008-09 included. Cheap to run and impossible to game.
     """
-    if sector != "financials":
+    # Fee businesses take this test too. An asset manager that lost money in
+    # 2008-09 was carrying risk its fee model was not supposed to carry.
+    if sector not in ("financials", "fee_business"):
         return GateResult("M-LOSS", True, "not applicable to this sector")
     r = M.loss_years(s)
     if r is None:
         return GateResult("M-LOSS", None, "earnings history insufficient")
     losses, span = r
-    cap = config.SECTOR_MODULES["financials"]["max_loss_years_in_20"]
+    cap = config.SECTOR_MODULES[sector]["max_loss_years_in_20"]
     return GateResult("M-LOSS", losses <= cap,
                       f"{losses} loss-making year(s) in {span}y of history (max {cap})",
                       float(losses))
@@ -382,7 +450,7 @@ CORE_GATES = [
     gate_C7_capital_allocation, gate_C8_rollup,
 ]
 MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc,
-                gate_M4_loss_history]
+                gate_M4_loss_history, gate_M_fee_margin, gate_M_fee_balance_sheet]
 
 
 def run_gates(s: AnnualSeries, ticker: str, sector: str) -> ScreenResult:

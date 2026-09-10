@@ -111,6 +111,11 @@ LEVERAGE_BANDS = {
     "utilities":   (5.5, 3.0, False),
     "reit":        (6.0, 2.5, False),
     "financials":  (None, None, False),   # capital ratios instead — see M4
+    "media":       (2.5, 8.0, False),     # carries more debt than software does
+    # A fee business has no EBITDA leverage question worth asking — it holds no
+    # inventory and finances no asset base. What matters is that it is not
+    # levered at all, which M-FEE-BS tests directly as net cash.
+    "fee_business": (None, None, False),
 }
 
 # ------------------------------------------------ gross profitability floors --
@@ -124,6 +129,12 @@ GROSS_PROFITABILITY_FLOORS = {
     "utilities":   None,
     "reit":        None,
     "financials":  None,
+    "media":       0.30,
+    # Asset managers, exchanges, advisers and brokers report no cost of revenue,
+    # so this gate could not be computed for them at all. In run 2 it was
+    # unevaluable for 81 of 108 and cost five survivors for no reason connected
+    # to business quality.
+    "fee_business": None,
 }
 
 # ----------------------------------------------------------- sector modules --
@@ -185,6 +196,44 @@ SECTOR_MODULES = {
         "capitalise_rnd": False,
         "manual_checks": ["achieved vs allowed ROE", "rate-base growth",
                           "regulatory jurisdiction quality"],
+    },
+    "media": {
+        # Split out of "software" after run 2. M3's 8% revenue floor was
+        # calibrated for software, where 3% growth signals decline. Applied to
+        # legacy media it is simply the wrong question — the New York Times
+        # failed on 6.0% while running a genuinely improving subscription
+        # business. Media earns its return from brand and library, not from
+        # compounding seat growth, so the growth bar drops and the margin and
+        # return bars stay.
+        "roic_median_min": 0.12,
+        "roic_every_year_min": 0.05,
+        "roic_every_year_lookback": 10,
+        "revenue_cagr_min": 0.02,
+        "growth_measure": "calendar",
+        "capitalise_rnd": False,
+    },
+    "fee_business": {
+        # Asset managers, exchanges, advisers, insurance brokers. §M4 says these
+        # do not belong on the bank track: the balance sheet is not the product,
+        # so ROE-on-equity and capital ratios measure the wrong thing. Run 2
+        # routed them to the consumer module instead, which was worse — its
+        # signature gross-profitability gate cannot be computed for a business
+        # with no cost of revenue, and 81 of 108 came back unevaluable.
+        #
+        # What actually distinguishes a good fee business: it earns a high
+        # return on the little capital it uses, it holds a fat operating margin
+        # through a market cycle, it grows fee revenue, and it carries no debt
+        # because it has nothing to finance.
+        "roic_median_min": 0.20,
+        "roic_every_year_min": 0.10,
+        "roic_every_year_lookback": 10,
+        "roe_median_min": 0.15,
+        "operating_margin_min": 0.20,      # M-FEE-MARGIN
+        "revenue_cagr_min": 0.04,
+        "growth_measure": "calendar",
+        "capitalise_rnd": False,
+        "max_net_debt_to_revenue": 0.50,   # M-FEE-BS
+        "max_loss_years_in_20": 1,
     },
     "reit": {
         # XBRL-computable proxies. AFFO and same-store NOI are not GAAP tags, so
@@ -262,8 +311,16 @@ MOS_AT_ZERO_DURABILITY = 0.50    # score 0
 
 # Labels are descriptive only — the score drives the price. These are also the
 # thresholds the hurdle's quality credit tests.
-DURABILITY_WIDE_MIN = 70
-DURABILITY_NARROW_MIN = 40
+# Recalibrated against run 5, which came out 33 wide of 40 — the bar was far
+# too low. Root cause was not only the threshold: persistence and gross
+# profitability were near-free points, because the C-gates that create this
+# cohort already require returns above the cost of capital and a GP/assets
+# floor. Both band sets were tightened in moat.py alongside these thresholds.
+# Re-scoring run 5's own components under the new settings gives 9 wide, 25
+# narrow, 6 uncertain — about a fifth of an already quality-screened list,
+# which is what "wide" ought to mean.
+DURABILITY_WIDE_MIN = 80
+DURABILITY_NARROW_MIN = 55
 
 # Below this many points of the 100 actually measurable, the score is not
 # trusted: the label falls to "uncertain", the quality credit is withheld, and

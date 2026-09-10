@@ -82,7 +82,7 @@ def durability(s: AnnualSeries, module: str,
     # --- level (25) -------------------------------------------------------
     if roics:
         spread = statistics.median(roics) - req
-        pts = _band(spread, [0.20, 0.15, 0.10, 0.05, 0.0], [25, 21, 16, 10, 5])
+        pts = _band(spread, [0.25, 0.18, 0.12, 0.07, 0.03], [25, 20, 14, 8, 3])
         out.append(("Excess return level", pts, 25,
                     f"median ROIC {statistics.median(roics):.1%}, {spread:+.1%} vs {req:.0%}"))
     else:
@@ -94,7 +94,10 @@ def durability(s: AnnualSeries, module: str,
     if len(roics) >= 5:
         hits = sum(1 for r in roics if r > req)
         frac = hits / len(roics)
-        pts = _band(frac, [1.0, 0.9, 0.8, 0.6, 0.4], [25, 22, 18, 11, 5])
+        # Bands are deliberately brutal. Every company scored here has ALREADY
+        # passed gates requiring returns above the cost of capital, so anything
+        # short of a perfect record is the informative signal.
+        pts = _band(frac, [1.0, 0.95, 0.85, 0.70], [25, 16, 8, 3])
         out.append(("Persistence of excess return", pts, 25,
                     f"{hits}/{len(roics)} years above {req:.0%}"))
     else:
@@ -114,7 +117,7 @@ def durability(s: AnnualSeries, module: str,
     # --- stability (10) ---------------------------------------------------
     cv = M.margin_stability(s)
     if cv is not None:
-        pts = _band(-cv, [-0.02, -0.04, -0.06, -0.10], [10, 8, 5, 2])
+        pts = _band(-cv, [-0.015, -0.03, -0.05, -0.08], [10, 8, 5, 2])
         out.append(("Operating margin stability", pts, 10, f"std dev {cv:.1%}"))
     else:
         out.append(("Operating margin stability", 0, 0, "margin history unavailable"))
@@ -123,7 +126,9 @@ def durability(s: AnnualSeries, module: str,
     gps = [g for y in ys if (g := M.gross_profitability(s, y)) is not None]
     if gps:
         med = statistics.median(gps)
-        pts = _band(med, [0.40, 0.30, 0.20, 0.12], [10, 8, 5, 2])
+        # Also raised: C5 already gates on 20-40% by sector, so the old bands
+        # gave full marks to two-thirds of survivors and carried no information.
+        pts = _band(med, [0.60, 0.45, 0.32, 0.22], [10, 8, 5, 2])
         out.append(("Gross profitability", pts, 10, f"median GP/assets {med:.1%}"))
     else:
         # Normal for financials and fee businesses, which report no cost of revenue.

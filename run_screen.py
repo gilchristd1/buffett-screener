@@ -181,6 +181,14 @@ def rank() -> None:
         comps = R.score_components(s, module, oey, disc, mvh)
         score, earned, avail = R.total_score(comps)
         priced = R.is_price_comparable(comps)
+        val_cov = R.valuation_coverage(comps)
+
+        # §7 Lens C is a VETO, not just a scoring input: a company trading more
+        # than one standard deviation above its own 10-year median EV/EBIT is
+        # excluded regardless of Lenses A and B. It was never wired, and until
+        # run 5 it could not have fired anyway — the old Lens C returned a
+        # negative reading for 34 of 37 names by construction.
+        veto = (mvh is not None and mvh > config.LENS_C_MAX_STDEV_ABOVE_MEDIAN)
 
         # §7 Lens A: the hurdle this company's owner-earnings yield must clear,
         # which falls as quality and reinvestment runway rise.
@@ -210,10 +218,14 @@ def rank() -> None:
             "durability": round(dur, 1), "moat_source": source,
             "margin_of_safety": f"{mos:.2f}",
             "score": round(score, 1), "points": f"{earned:.0f}/{avail:.0f}",
-            "priced": "yes" if priced else "NO — score omits all 20 valuation points",
+            "priced": "yes" if priced else "NO — no price, score omits valuation",
+            "valuation_coverage": f"{val_cov:.0f}/{R.VALUATION_POINTS}",
+            "lens_c_veto": "VETO — above its own 10y multiple" if veto else "",
             "owner_earnings_yield": f"{oey:.4f}" if oey is not None else "",
             "hurdle": f"{hurdle:.4f}" if hurdle is not None else "",
-            "clears_hurdle": ("yes" if (oey is not None and hurdle is not None and oey >= hurdle)
+            "clears_hurdle": ("no — Lens C veto" if veto and oey is not None and hurdle is not None
+                              and oey >= hurdle
+                              else "yes" if (oey is not None and hurdle is not None and oey >= hurdle)
                               else "no" if oey is not None else ""),
             "price": f"{price:.2f}" if price else "",
             "buy_price": f"{bp:.2f}" if bp else "",

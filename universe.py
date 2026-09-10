@@ -101,11 +101,15 @@ def sic_to_module(sic: str | None) -> str | None:
     # --- technology and media, before the industrials catch-all ---
     if (7370 <= n <= 7379 or 3570 <= n <= 3579
             or 3660 <= n <= 3679          # communications equipment + semiconductors
-            or 3820 <= n <= 3827          # instruments, measurement, lab
-            or 2700 <= n <= 2799          # publishing
-            or 4830 <= n <= 4841          # broadcasting and cable
-            or n == 7812 or n == 7822 or n == 7841):   # motion picture / media
+            or 3820 <= n <= 3827):        # instruments, measurement, lab
         return "software"
+
+    # Media, split out of "software" after run 2. Publishing, broadcasting and
+    # film do not grow like software and should not be asked to.
+    if (2700 <= n <= 2799                 # publishing
+            or 4830 <= n <= 4841          # broadcasting and cable
+            or n in (7812, 7822, 7841)):  # motion picture and distribution
+        return "media"
 
     if 8000 <= n <= 8099 or 2830 <= n <= 2836 or 3840 <= n <= 3851:
         return "healthcare"
@@ -129,10 +133,14 @@ def sic_to_module(sic: str | None) -> str | None:
     return None
 
 
-# §M4: fee businesses run the operating-company gates. Map them onto the
-# consumer module, whose thresholds (ROIC >=15%, GP/assets >=30%, 2.5x leverage)
-# are the closest fit for an asset-light fee earner.
-FEE_BUSINESS_MODULE = "consumer"
+# §M4: fee businesses run their own gates, not the bank track and not a
+# borrowed operating-company module. The first attempt mapped them to
+# "consumer", which was a regression: the consumer module's signature
+# gross-profitability gate cannot be computed for a business with no cost of
+# revenue, so 81 of 108 fee businesses came back unevaluable and five survivors
+# were lost for no reason connected to business quality. They now have their own
+# module — ROE, operating margin, fee growth, and a net-cash balance sheet.
+FEE_BUSINESS_MODULE = "fee_business"
 
 
 def excluded_by_sic(sic: str | None) -> str | None:
