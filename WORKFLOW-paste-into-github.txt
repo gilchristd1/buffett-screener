@@ -8,8 +8,22 @@ on:
     - cron: "0 6 1 3,6,9,12 *"   # 06:00 UTC on the 1st of Mar/Jun/Sep/Dec
   workflow_dispatch:              # manual "Run workflow" button
   push:
+    # Any change to the code, the thresholds or the hand-maintained overlay.
+    #
+    # This was "config.py" alone, which was right while files were pasted into
+    # the web editor one at a time — a seven-file change would otherwise have
+    # fired seven runs. Now that push.sh sends a whole batch as one commit,
+    # that narrowness silently swallowed a batch: probe v2 was pushed and no
+    # run started, because config.py happened not to be in it.
+    #
+    # The runner's own result commits touch only out/, so they cannot loop —
+    # and GitHub does not re-trigger on pushes made with GITHUB_TOKEN anyway.
     paths:
-      - "config.py"               # rerun whenever a threshold changes
+      - "**.py"
+      - "overlay.csv"
+      - "moats.csv"
+      - "requirements.txt"
+      - ".github/workflows/screen.yml"
 
 permissions:
   contents: write                 # needed to commit results back

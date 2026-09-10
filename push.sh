@@ -84,5 +84,6 @@ echo
 git push
 
 echo
-echo "Pushed. If config.py was among the changes, the screen run has already"
-echo "started on its own — no need to press anything in GitHub."
+echo "Pushed. The screen run starts on its own for any change to a .py file,"
+echo "overlay.csv, moats.csv, requirements.txt or the workflow — so there is"
+echo "almost never anything to press in GitHub."
