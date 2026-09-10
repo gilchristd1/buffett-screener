@@ -428,6 +428,19 @@ def main():
     G.OVERLAY = {"OVR": {"ticker": "OVR", "severity": "veto", "issue": "regulator action"}}
     g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
     failures += not check("an explicit veto blocks", g.passed is False, g.reason)
+    # A one-off gain inside operating income makes C9 read backwards. The 2026
+    # tariff refunds are the live case: Five Below's operating margin went 5.1%
+    # to 21.8% on $163.6m of refunds, which C9 would otherwise read as a
+    # business improving sharply.
+    G.OVERLAY = {"OVR": {"ticker": "OVR", "earnings_distorted": "yes",
+                         "issue": "tariff refund in operating income",
+                         "severity": "watch"}}
+    g = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C9"]
+    failures += not check("a distorted period makes C9 unevaluable, not a pass",
+                          g.passed is None, g.reason[:80])
+    g10 = {x.code: x for x in G.run_gates(steady0, "OVR", "consumer").gates}["C10"]
+    failures += not check("...and a distortion alone does not block the company",
+                          g10.passed is True, g10.reason[:60])
     G.OVERLAY = {}
 
     # Guidance caps the valuation base, and only ever downward.

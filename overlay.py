@@ -37,7 +37,7 @@ import csv
 from pathlib import Path
 
 FIELDS = ["ticker", "as_of", "guidance", "consecutive_cuts",
-          "guided_fy_earnings_change", "ceo_change_12m",
+          "guided_fy_earnings_change", "ceo_change_12m", "earnings_distorted",
           "issue", "severity", "source"]
 
 SEVERITIES = {"none", "watch", "veto"}
@@ -98,6 +98,35 @@ def verdict(row: dict | None) -> tuple[bool, str]:
         return True, (f"{note} — guidance cut in two consecutive quarters; "
                       "management's own view of the year has been wrong twice")
     return False, note
+
+
+def earnings_distorted(row: dict | None) -> bool:
+    """
+    Is the current period's reported profit inflated by something that will not
+    recur?
+
+    Found while reading the September 2026 shortlist by hand, and it is the
+    most consequential thing the qualitative pass turned up. The Supreme Court
+    struck down the IEEPA tariffs in February 2026, so importers received
+    refunds — and those refunds land in GAAP operating income:
+
+        Five Below   $163.6m   operating margin 21.8% vs 5.1% a year earlier
+        lululemon    $134.5m
+        Logitech      $61.0m   operating income +60%, or +14% without it
+        Lennox        $30.0m
+
+    C9 compares operating income year on year to catch a business that has
+    stopped earning what its record says. A one-off refund does the opposite of
+    what C9 needs: it makes a deteriorating business look like an improving one
+    and the gate waves it through. Five Below is the extreme case — GAAP EPS
+    $3.99 against $1.68 adjusted.
+
+    This cannot be detected from XBRL: the refund sits inside operating income
+    with no separate tag. It has to be read off the results release, which is
+    exactly what the overlay is for.
+    """
+    return (row or {}).get("earnings_distorted", "").strip().lower() in (
+        "y", "yes", "true", "1")
 
 
 def earnings_factor(row: dict | None) -> float | None:

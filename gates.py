@@ -217,6 +217,9 @@ def gate_C8_rollup(s: AnnualSeries, sector: str) -> GateResult:
 
 
 # --------------------------------------------------------- sector module --
+_TICKER = ""      # set by run_gates so C9 can consult the overlay
+
+
 def gate_C9_current_trading(s: AnnualSeries, sector: str) -> GateResult:
     """
     C9: is the business still earning what its ten-year record says it earns?
@@ -237,6 +240,16 @@ def gate_C9_current_trading(s: AnnualSeries, sector: str) -> GateResult:
     """
     if not config.C9_ENABLED:
         return GateResult("C9", True, "current-trading test disabled")
+    # A one-off gain inside operating income makes this test read backwards:
+    # the business looks like it is improving on money it will not earn again.
+    # See overlay.earnings_distorted for the 2026 tariff-refund case.
+    import overlay as _OV
+    if _OV.earnings_distorted(OVERLAY.get((_TICKER or "").upper())):
+        return GateResult("C9", None,
+                          "current period's profit is inflated by a one-off gain "
+                          "(see overlay.csv) — year-on-year comparison is not "
+                          "meaningful, so this is unevaluable rather than passed")
+
     cur = M.current_vs_year_ago(s)
     if cur is None:
         if config.C9_UNVERIFIED_BLOCKS:
@@ -550,6 +563,8 @@ MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc,
 
 
 def run_gates(s: AnnualSeries, ticker: str, sector: str) -> ScreenResult:
+    global _TICKER
+    _TICKER = ticker
     res = ScreenResult(ticker=ticker, name=s.name, sector=sector)
     for fn in CORE_GATES + MODULE_GATES:
         try:
