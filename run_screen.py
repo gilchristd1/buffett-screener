@@ -382,6 +382,15 @@ def screen() -> None:
         for m, v in sorted(bench.items(), key=lambda kv: -kv[1]):
             w.writerow([m, f"{v:.5f}", counts[m]])
 
+    # C9 coverage decides whether the current-trading test can be made binding.
+    c9 = [r for r in results if r["gate"] == "C9"]
+    unver = sum(1 for r in c9 if str(r["reason"]).startswith("NOT VERIFIED"))
+    broke = sum(1 for r in c9 if r["passed"] is False)
+    if c9:
+        print(f"\nC9 current trading: {len(c9) - unver:,}/{len(c9):,} verified "
+              f"({100 * (len(c9) - unver) / len(c9):.0f}%), {broke:,} failing on a break")
+        print("  set config.C9_UNVERIFIED_BLOCKS = True once coverage is high enough")
+
     print(f"\n{len(universe):,} screened -> {len(survivors):,} survivors")
     print(f"  sector growth benchmark: {len(bench)} modules -> {OUT/'sector_growth.csv'}")
     print(f"  detail:    {OUT/'results.csv'}")

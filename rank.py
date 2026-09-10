@@ -198,16 +198,35 @@ def is_price_comparable(components: list[tuple]) -> bool:
 
 
 # ------------------------------------------------------------ valuation --
+def normalised_owner_earnings(s: secdata.AnnualSeries) -> tuple[float, float] | None:
+    """
+    (owner earnings used for valuation, haircut factor applied).
+
+    The three-year median, cut back to current earning power when the latest
+    filed quarters show the business earning less than a year ago. Without the
+    haircut the median carries the good years while the price reflects the bad
+    one, and the screen calls a broken business cheap.
+    """
+    ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
+    if not ys:
+        return None
+    oes = [o for o in (M.owner_earnings(s, y) for y in ys) if o is not None]
+    if not oes:
+        return None
+    factor = M.current_earnings_factor(s)
+    factor = 1.0 if factor is None else factor
+    return statistics.median(oes) * factor, factor
+
+
 def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float) -> float | None:
-    """Lens A: normalised owner earnings over enterprise value."""
+    """Lens A: current-adjusted owner earnings over enterprise value."""
     ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
     if not ys or not market_cap:
         return None
-    oes = [M.owner_earnings(s, y) for y in ys]
-    oes = [o for o in oes if o is not None]
-    if not oes:
+    got = normalised_owner_earnings(s)
+    if not got:
         return None
-    oe = statistics.median(oes)          # normalised, not the latest year
+    oe, _ = got
     ev = M.enterprise_value(market_cap, s, ys[-1])
     return oe / ev if ev and ev > 0 else None
 
@@ -235,6 +254,12 @@ def dcf_intrinsic_value(s: secdata.AnnualSeries) -> float | None:
     if len(oes) < 5:
         return None
     base = statistics.median(list(oes.values())[-3:])
+    # Same haircut as Lens A. Discounting a decade of cash flows off a base the
+    # company has already stopped earning is the single largest way this model
+    # can be wrong, and it is wrong in the direction that manufactures bargains.
+    factor = M.current_earnings_factor(s)
+    if factor is not None:
+        base *= factor
     first, last = min(oes), max(oes)
     hist = M.cagr(oes[first], oes[last], last - first) or 0.0
     g = max(0.0, min(hist, 0.10))

@@ -239,6 +239,111 @@ def margin_stability(s: AnnualSeries, years: int = 10) -> float | None:
     return statistics.pstdev(margins) if len(margins) >= 3 else None
 
 
+# ------------------------------------------------- current trading --
+def _days(a: str, b: str) -> int:
+    from datetime import date
+    ya, ma, da = (int(x) for x in a.split("-"))
+    yb, mb, db = (int(x) for x in b.split("-"))
+    return (date(yb, mb, db) - date(ya, ma, da)).days
+
+
+def recent_quarters(s: AnnualSeries, field: str, want: int = 4) -> list[str] | None:
+    """
+    The most recent run of CONSECUTIVE three-month periods, newest last.
+
+    Consecutive matters: the fourth quarter is never filed on a 10-Q, so a naive
+    "last four entries" would splice Q3 of one year onto Q1 of the next and
+    silently compare fifteen months to twelve. Each adjacent gap must be a
+    quarter, or the run stops.
+    """
+    q = s.quarterly(field)
+    if not q:
+        return None
+    ends = sorted(q)
+    run = [ends[-1]]
+    for e in reversed(ends[:-1]):
+        if len(run) >= want:
+            break
+        if 80 <= _days(e, run[0]) <= 100:
+            run.insert(0, e)
+        else:
+            break
+    return run if len(run) >= 2 else None
+
+
+def year_ago_match(s: AnnualSeries, field: str, ends: list[str]) -> list[str] | None:
+    """The same periods one year earlier, or None if any is missing."""
+    q = s.quarterly(field)
+    out = []
+    for e in ends:
+        hit = [c for c in q if 345 <= _days(c, e) <= 385]
+        if not hit:
+            return None
+        out.append(max(hit))
+    return out
+
+
+def current_vs_year_ago(s: AnnualSeries) -> dict | None:
+    """
+    Like-for-like comparison of the latest filed quarters against the same
+    quarters a year earlier.
+
+    Deliberately NOT a trailing-twelve-month figure. A TTM needs a derived
+    fourth quarter, and deriving one from an annual less three quarters goes
+    wrong quietly whenever a filer restates or changes its year end. Comparing
+    the same two, three or four quarters year on year needs no derivation and
+    is the comparison the company's own release makes.
+    """
+    ends = recent_quarters(s, "revenue")
+    if not ends:
+        return None
+    prior = year_ago_match(s, "revenue", ends)
+    if not prior:
+        return None
+    rev_now = sum(s.quarterly("revenue")[e] for e in ends)
+    rev_then = sum(s.quarterly("revenue")[e] for e in prior)
+    if rev_then <= 0:
+        return None
+
+    out = {
+        "quarters": len(ends), "as_of": ends[-1],
+        "revenue_growth": rev_now / rev_then - 1,
+        "operating_income_ratio": None, "margin_now": None, "margin_then": None,
+    }
+    oi = s.quarterly("operating_income")
+    if all(e in oi for e in ends) and all(e in oi for e in prior):
+        oi_now = sum(oi[e] for e in ends)
+        oi_then = sum(oi[e] for e in prior)
+        out["margin_now"] = oi_now / rev_now
+        out["margin_then"] = oi_then / rev_then
+        if oi_then > 0:
+            out["operating_income_ratio"] = oi_now / oi_then
+    return out
+
+
+def current_earnings_factor(s: AnnualSeries) -> float | None:
+    """
+    A haircut applied to normalised owner earnings when the business is
+    currently earning less than it was a year ago.
+
+    The valuation lenses run off a three-year median of owner earnings. For a
+    company whose earnings have just fallen off a cliff, that median includes
+    the good years while the price reflects the bad one, so the screen reports
+    a bargain — lululemon showed an 18.1% owner-earnings yield in run 5 while
+    guiding to a 5-7% revenue decline. Never above 1.0: a company earning MORE
+    than a year ago gets no credit for it here, because one good year is not
+    evidence of a new normal. Conservative in both directions, by design.
+    """
+    cur = current_vs_year_ago(s)
+    if not cur:
+        return None
+    r = cur["operating_income_ratio"]
+    if r is None:
+        # Fall back to revenue when operating income is not tagged quarterly.
+        r = 1 + cur["revenue_growth"]
+    return min(1.0, max(0.0, r))
+
+
 # ------------------------------------------------- capital allocation --
 def capital_allocation(s: AnnualSeries, years: int = 10) -> tuple[str, float] | None:
     """

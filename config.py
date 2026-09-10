@@ -89,6 +89,27 @@ C6_MAX_ADJUSTED_VS_GAAP_GAP = 0.25
 # C7 capital allocation
 C7_MIN_INCREMENTAL_ROIC = 0.10
 
+# C9 current trading — the gap lululemon exposed.
+# Every other gate reads a ten-year record, so the screen's most recent view of
+# a company was up to fifteen months stale. These test the latest filed
+# quarters against the same quarters a year earlier.
+C9_MAX_REVENUE_DECLINE = 0.05        # >5% down year on year is a break
+C9_MIN_OPERATING_INCOME_RATIO = 0.75 # >25% down year on year is a break
+C9_ENABLED = True
+# What to do when a company has no parseable quarterly filings.
+#
+# FALSE on purpose, and it is the opposite of the call made on C4. C4 tests
+# whether a company can survive its debts, so not knowing had to mean "not
+# proven safe". C9 tests whether the annual record is still current, and not
+# knowing means only that the screen is where it already was before C9 existed.
+# Making it blocking on day one would quietly delete every company whose
+# quarterly tagging this parser does not handle — the failure mode that
+# produced an empty universe in run 1.
+#
+# Run 7 reports the coverage. Flip this to True once the count says the parser
+# reaches nearly everything, not before.
+C9_UNVERIFIED_BLOCKS = False
+
 # C8 roll-up test
 C8_MAX_GOODWILL_INTANGIBLES_SHARE = 0.40
 
@@ -232,7 +253,21 @@ SECTOR_MODULES = {
         "revenue_cagr_min": 0.04,
         "growth_measure": "calendar",
         "capitalise_rnd": False,
-        "max_net_debt_to_revenue": 0.50,   # M-FEE-BS
+        # M-FEE-BS. Two caps, not one, because "fee business" covers two
+        # different animals. An asset manager's revenue moves with markets and
+        # debt against it is genuinely dangerous. A ratings or data business
+        # sells contractual subscriptions and can carry leverage safely —
+        # Moody's has done so for two decades while compounding.
+        #
+        # Rather than guess which is which from SIC codes, the test is
+        # BEHAVIOURAL: a fee business whose revenue has never fallen materially
+        # in ten years has demonstrated it can support debt, and gets the
+        # higher cap. Run 6 excluded Moody's at 0.59x on the single 0.50x cap,
+        # despite 70.9% median ROE, a 41.7% operating margin and no loss in
+        # nineteen years — a threshold I set with no calibration behind it.
+        "max_net_debt_to_revenue": 0.50,
+        "max_net_debt_to_revenue_if_stable": 1.25,
+        "revenue_stability_max_decline": 0.05,
         "max_loss_years_in_20": 1,
     },
     "reit": {

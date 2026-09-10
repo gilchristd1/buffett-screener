@@ -217,6 +217,51 @@ def gate_C8_rollup(s: AnnualSeries, sector: str) -> GateResult:
 
 
 # --------------------------------------------------------- sector module --
+def gate_C9_current_trading(s: AnnualSeries, sector: str) -> GateResult:
+    """
+    C9: is the business still earning what its ten-year record says it earns?
+
+    The gap run 5 exposed. Every other gate in this file reads annual filings,
+    so the screen's most recent view of a company was up to fifteen months old.
+    lululemon reached the top of the queue with a 98/100 durability score and
+    an 18.1% owner-earnings yield while comparable sales were falling 9%,
+    margins were collapsing and guidance had been cut twice.
+
+    This is not a forecast. It compares the latest filed quarters against the
+    same quarters a year earlier — the comparison the company's own results
+    release makes — and refuses to carry a broken business forward on the
+    strength of its history. A company that fails here is not judged a bad
+    business; it is judged one whose future has stopped being predictable,
+    which is the honest reason for a quality screen to step back rather than
+    price it.
+    """
+    if not config.C9_ENABLED:
+        return GateResult("C9", True, "current-trading test disabled")
+    cur = M.current_vs_year_ago(s)
+    if cur is None:
+        if config.C9_UNVERIFIED_BLOCKS:
+            return GateResult("C9", None, "no comparable quarterly filings")
+        return GateResult("C9", True,
+                          "NOT VERIFIED — no comparable quarterly filings; this company "
+                          "is still being judged on annual data alone")
+
+    g = cur["revenue_growth"]
+    r = cur["operating_income_ratio"]
+    n, asof = cur["quarters"], cur["as_of"]
+    bits = [f"{n}Q to {asof}: revenue {g:+.1%} YoY"]
+    if r is not None:
+        bits.append(f"operating income {r - 1:+.1%} YoY")
+    if cur["margin_now"] is not None:
+        bits.append(f"margin {cur['margin_now']:.1%} vs {cur['margin_then']:.1%}")
+    note = "; ".join(bits)
+
+    if g < -config.C9_MAX_REVENUE_DECLINE:
+        return GateResult("C9", False, f"{note} — revenue break", g)
+    if r is not None and r < config.C9_MIN_OPERATING_INCOME_RATIO:
+        return GateResult("C9", False, f"{note} — earnings break", r)
+    return GateResult("C9", True, note, g)
+
+
 def gate_module_roic(s: AnnualSeries, sector: str) -> GateResult:
     mod = config.SECTOR_MODULES.get(sector)
     if not mod:
@@ -411,6 +456,20 @@ def gate_M_fee_balance_sheet(s: AnnualSeries, sector: str) -> GateResult:
     cap = mod.get("max_net_debt_to_revenue")
     if cap is None:
         return GateResult("M-FEE-BS", True, "not applicable to this sector")
+
+    # A fee business that has never seen revenue fall has demonstrated it can
+    # carry debt; one whose revenue swings with markets has not. Behavioural,
+    # so it does not depend on guessing the sub-industry from a SIC code.
+    stable_cap = mod.get("max_net_debt_to_revenue_if_stable")
+    worst = None
+    if stable_cap:
+        rev = s.series("revenue")
+        ys = sorted(rev)[-11:]
+        drops = [(rev[b] - rev[a]) / rev[a] for a, b in zip(ys, ys[1:]) if rev[a] > 0]
+        if len(drops) >= 5:
+            worst = min(drops)
+            if worst >= -mod.get("revenue_stability_max_decline", 0.05):
+                cap = stable_cap
     ys = M.common_years(s, ["revenue", "total_equity"], 3)
     if not ys:
         return GateResult("M-FEE-BS", None, "revenue history unavailable")
@@ -421,8 +480,13 @@ def gate_M_fee_balance_sheet(s: AnnualSeries, sector: str) -> GateResult:
     ratio = nd / rev
     if ratio <= 0:
         return GateResult("M-FEE-BS", True, f"net cash ({ratio:.2f}x revenue)", ratio)
+    why = ""
+    if worst is not None:
+        why = (f" (revenue never fell more than {abs(worst):.1%} in 10y — stable cap)"
+               if cap == mod.get("max_net_debt_to_revenue_if_stable")
+               else f" (worst annual revenue fall {worst:.1%} — market-linked cap)")
     return GateResult("M-FEE-BS", ratio <= cap,
-                      f"net debt {ratio:.2f}x revenue vs {cap:.2f}x max", ratio)
+                      f"net debt {ratio:.2f}x revenue vs {cap:.2f}x max{why}", ratio)
 
 
 def gate_M4_loss_history(s: AnnualSeries, sector: str) -> GateResult:
@@ -447,7 +511,7 @@ def gate_M4_loss_history(s: AnnualSeries, sector: str) -> GateResult:
 CORE_GATES = [
     gate_C1_cash_conversion, gate_C2_dilution, gate_C3_earnings_durability,
     gate_C4_leverage, gate_C5_gross_profitability, gate_C6_accounting,
-    gate_C7_capital_allocation, gate_C8_rollup,
+    gate_C7_capital_allocation, gate_C8_rollup, gate_C9_current_trading,
 ]
 MODULE_GATES = [gate_module_roic, gate_module_growth, gate_module_sbc,
                 gate_M4_loss_history, gate_M_fee_margin, gate_M_fee_balance_sheet]

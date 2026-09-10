@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import time
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field as _dc_field
 from pathlib import Path
 
 import requests
@@ -252,9 +252,18 @@ class AnnualSeries:
     cik: int
     name: str
     fields: dict[str, dict[int, float]]
+    # field -> {period end date (YYYY-MM-DD) -> value}, three-month periods only.
+    quarters: dict[str, dict[str, float]] = _dc_field(default_factory=dict)
 
     def series(self, field: str) -> dict[int, float]:
         return self.fields.get(field, {})
+
+    def quarterly(self, field: str) -> dict[str, float]:
+        return self.quarters.get(field, {})
+
+    def latest_quarter_end(self) -> str | None:
+        ends = [e for q in self.quarters.values() for e in q]
+        return max(ends) if ends else None
 
     def years(self) -> list[int]:
         if "revenue" in self.fields and self.fields["revenue"]:
@@ -280,6 +289,55 @@ def _is_annual_period(item: dict) -> bool:
     y2, m2, d2 = (int(x) for x in end.split("-"))
     days = (date(y2, m2, d2) - date(y1, m1, d1)).days
     return 350 <= days <= 380
+
+
+def _is_quarter_period(item: dict) -> bool:
+    """Flow items covering roughly three months."""
+    start, end = item.get("start"), item.get("end")
+    if not start or not end:
+        return False
+    from datetime import date
+    try:
+        y1, m1, d1 = (int(x) for x in start.split("-"))
+        y2, m2, d2 = (int(x) for x in end.split("-"))
+    except ValueError:
+        return False
+    return 80 <= (date(y2, m2, d2) - date(y1, m1, d1)).days <= 100
+
+
+def _pick_quarters(units: list[dict]) -> dict[str, float]:
+    """
+    Three-month flow values keyed by period END DATE (not fiscal year).
+
+    Why this exists: the screen read only 10-K facts, so its most recent view of
+    any company was up to fifteen months stale. That is how lululemon reached
+    the top of run 5's queue with a 98/100 durability score while comparable
+    sales were falling 9% and guidance was being cut for the second time.
+
+    Two details the format forces:
+
+      * A 10-Q reports the quarter AND the year-to-date period. Only ~90-day
+        entries are kept, so a six- or nine-month cumulative cannot be counted
+        as a quarter.
+      * The fourth quarter is never filed on a 10-Q. It is derived in
+        `quarterly_ttm` as the annual figure less the first three quarters,
+        which is also how the company's own Q4 release computes it.
+
+    Restatements: latest filing wins, as in the annual path.
+    """
+    best: dict[str, tuple[str, float]] = {}
+    for item in units:
+        if item.get("form") not in ("10-Q", "10-K"):
+            continue
+        if not _is_quarter_period(item):
+            continue
+        end, val = item.get("end"), item.get("val")
+        if not end or val is None:
+            continue
+        filed = item.get("filed", "")
+        if end not in best or filed > best[end][0]:
+            best[end] = (filed, float(val))
+    return {e: v for e, (_, v) in best.items()}
 
 
 def _fiscal_year_of(end: str) -> int | None:
@@ -354,8 +412,28 @@ def extract(facts: dict) -> AnnualSeries:
         if merged:
             out[field] = merged
 
+    # Quarterly, for revenue and operating income only. Both are tagged by
+    # essentially every filer; quarterly capex and D&A are far patchier, so the
+    # current-trading test is built from these two rather than pretending to a
+    # quarterly owner-earnings figure that would often be wrong.
+    quarters: dict[str, dict[str, float]] = {}
+    for qfield in ("revenue", "operating_income"):
+        merged_q: dict[str, float] = {}
+        for tag in TAG_MAP.get(qfield, []):
+            node = gaap.get(tag)
+            if not node:
+                continue
+            units = node.get("units", {}).get("USD")
+            if not units:
+                continue
+            for end, val in _pick_quarters(units).items():
+                merged_q.setdefault(end, val)
+        if merged_q:
+            quarters[qfield] = merged_q
+
     return AnnualSeries(
         cik=int(facts.get("cik", 0)),
         name=facts.get("entityName", ""),
         fields=out,
+        quarters=quarters,
     )
