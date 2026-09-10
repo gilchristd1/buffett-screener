@@ -1,44 +1,43 @@
 ticker,name,module,moat,durability,moat_source,margin_of_safety,score,points,priced,valuation_coverage,lens_c_veto,owner_earnings_yield,hurdle,clears_hurdle,price,buy_price,discount_to_iv,ev_ebit_vs_history_sd,market_cap
-LULU,lululemon athletica inc.,consumer,wide,98.0,computed,0.30,92.9,65/70,yes,20/20,,0.1431,0.0600,yes,96.43,146.15,0.541,-1.87,10182435623
-TOL,"Toll Brothers, Inc.",industrials,uncertain,51.0,computed,0.40,84.3,59/70,yes,20/20,,0.1011,0.0800,yes,131.69,132.93,0.404,-0.24,12134838654
-YUMC,"Yum China Holdings, Inc.",consumer,narrow,69.0,computed,0.36,83.6,58/70,yes,20/20,,0.0693,0.0800,no,42.35,31.39,0.139,-0.73,14503101537
-SFM,"Sprouts Farmers Market, Inc.",consumer,wide,89.0,computed,0.32,82.9,58/70,yes,20/20,,0.0562,0.0600,no,72.44,49.14,0.001,-0.62,6754858182
-ADBE,ADOBE INC.,software,wide,91.0,computed,0.32,78.6,55/70,yes,20/20,,0.0634,0.0600,yes,248.21,197.84,0.144,-2.38,98663477668
-LII,LENNOX INTERNATIONAL INC,industrials,narrow,69.0,computed,0.36,78.6,55/70,yes,20/20,,0.0624,0.0800,no,371.31,273.26,0.133,-2.23,12921576033
+TOL,"Toll Brothers, Inc.",industrials,uncertain,51.0,computed,0.40,84.3,59/70,yes,20/20,,0.1010,0.0800,yes,131.91,132.93,0.403,-0.23,12155111107
+YUMC,"Yum China Holdings, Inc.",consumer,narrow,69.0,computed,0.36,83.6,58/70,yes,20/20,,0.0694,0.0800,no,42.29,31.39,0.140,-0.73,14484266235
+SFM,"Sprouts Farmers Market, Inc.",consumer,wide,89.0,computed,0.32,81.4,57/70,yes,20/20,,0.0562,0.0600,no,72.54,49.14,-0.001,-0.61,6764182802
+ADBE,ADOBE INC.,software,wide,91.0,computed,0.32,78.6,55/70,yes,20/20,,0.0630,0.0600,yes,249.85,197.84,0.139,-2.37,99315377426
+LII,LENNOX INTERNATIONAL INC,industrials,narrow,69.0,computed,0.36,78.6,55/70,yes,20/20,,0.0625,0.0800,no,370.71,273.26,0.134,-2.24,12900695839
 GL,GLOBE LIFE INC.,financials,uncertain,34.4,computed,0.43,77.3,50/64,yes,20/20,,0.0700,0.0800,no,170.74,136.55,0.289,0.07,13121275002
-LOGI,LOGITECH INTERNATIONAL S.A.,software,wide,89.0,computed,0.32,77.1,54/70,yes,20/20,,0.0506,0.0600,no,99.89,55.62,-0.218,-0.31,14303797944
-ULTA,"Ulta Beauty, Inc.",consumer,wide,95.0,computed,0.31,77.1,54/70,yes,20/20,,0.0528,0.0600,no,541.72,358.53,-0.043,-0.14,23162575937
-FIVE,"FIVE BELOW, INC",consumer,narrow,73.0,computed,0.35,70.7,50/70,yes,20/20,,0.0239,0.0800,no,245.73,65.35,-1.429,-0.05,13528427785
-SEIC,SEI INVESTMENTS CO,fee_business,narrow,66.7,computed,0.37,68.0,44/64,yes,20/20,,0.0335,0.0800,no,107.20,39.64,-0.713,0.58,12866055944
-COST,COSTCO WHOLESALE CORP /NEW,consumer,wide,90.0,computed,0.32,67.9,48/70,yes,20/20,VETO — above its own 10y multiple,0.0189,0.0600,no,901.21,208.94,-1.933,1.17,399667542697
-CMI,CUMMINS INC,industrials,narrow,79.0,computed,0.34,67.1,47/70,yes,20/20,VETO — above its own 10y multiple,0.0388,0.0800,no,548.60,220.99,-0.633,2.03,75522734207
-HD,"HOME DEPOT, INC.",consumer,wide,81.0,computed,0.34,67.1,47/70,yes,20/20,,0.0420,0.0600,no,304.96,159.52,-0.266,-0.05,304255419819
-MKTX,MARKETAXESS HOLDINGS INC,fee_business,narrow,75.6,computed,0.35,66.4,42/64,yes,20/20,,0.0587,0.0800,no,163.20,109.26,0.028,-1.57,5743304104
-IDXX,IDEXX LABORATORIES INC /DE,healthcare,narrow,73.0,computed,0.35,65.7,46/70,yes,20/20,,0.0222,0.0800,no,508.25,136.03,-1.414,-0.93,40040509419
-GGG,GRACO INC,industrials,narrow,73.0,computed,0.35,63.6,44/70,yes,20/20,,0.0439,0.0800,no,75.14,30.93,-0.569,-0.49,12169210236
-DCI,DONALDSON Co INC,industrials,narrow,61.0,computed,0.38,62.9,44/70,yes,20/20,,0.0362,0.0800,no,88.26,33.33,-0.647,0.47,10230310050
-UI,Ubiquiti Inc.,software,wide,80.0,computed,0.34,62.9,44/70,yes,20/20,,0.0228,0.0600,no,532.15,145.47,-1.414,-0.47,32209876489
-GWW,"W.W. GRAINGER, INC.",industrials,wide,83.0,computed,0.33,61.4,43/70,yes,20/20,VETO — above its own 10y multiple,0.0297,0.0600,no,1268.26,446.86,-0.890,2.76,59736241160
-CDNS,CADENCE DESIGN SYSTEMS INC,software,narrow,74.4,computed,0.35,60.7,42/70,yes,20/20,,0.0148,0.0800,no,283.83,48.30,-2.813,0.20,78284851576
-EME,"EMCOR Group, Inc.",industrials,narrow,79.0,computed,0.34,60.7,42/70,yes,20/20,VETO — above its own 10y multiple,0.0317,0.0800,no,745.99,277.90,-0.766,2.44,32905544616
-LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,narrow,60.0,computed,0.38,60.7,42/70,yes,20/20,,0.0359,0.0800,no,250.70,109.52,-0.419,0.65,13664593113
-TJX,TJX COMPANIES INC /DE/,consumer,narrow,66.0,computed,0.37,60.6,40/66,yes,16/20,,0.0358,0.0800,no,126.48,50.08,-0.596,,139124722927
-RMD,RESMED INC,healthcare,narrow,69.0,computed,0.36,60.0,42/70,yes,20/20,,0.0488,0.0800,no,220.24,123.48,-0.138,-1.61,31770128665
-SSD,"Simpson Manufacturing Co., Inc.",industrials,narrow,74.0,computed,0.35,60.0,42/70,yes,20/20,,0.0492,0.0800,no,172.74,100.92,-0.109,-0.18,7079694193
-THG,"HANOVER INSURANCE GROUP, INC.",financials,uncertain,28.9,computed,0.44,57.8,37/64,yes,20/20,,0.0537,0.0800,no,224.93,110.51,-0.135,-0.37,7832286325
-AIT,APPLIED INDUSTRIAL TECHNOLOGIES INC,industrials,uncertain,49.0,computed,0.40,57.1,40/70,yes,20/20,,0.0333,0.0800,no,317.42,118.45,-0.603,0.47,11648951364
-CHRW,"C. H. ROBINSON WORLDWIDE, INC.",industrials,narrow,69.0,computed,0.36,57.1,40/70,yes,20/20,VETO — above its own 10y multiple,0.0289,0.0800,no,152.02,39.55,-1.452,1.61,17763728740
-FSS,FEDERAL SIGNAL CORP /DE/,industrials,narrow,68.0,computed,0.36,57.1,40/70,yes,20/20,,0.0351,0.0800,no,113.54,46.45,-0.555,0.55,6930664568
-REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,narrow,64.0,computed,0.37,56.4,40/70,yes,20/20,,0.0646,0.0800,no,797.46,545.55,0.082,0.12,74925444085
-ISRG,INTUITIVE SURGICAL INC,healthcare,narrow,61.0,computed,0.38,55.7,39/70,yes,20/20,,0.0191,0.0800,no,360.63,75.64,-1.966,-0.72,127402660568
-FIX,COMFORT SYSTEMS USA INC,industrials,narrow,76.0,computed,0.35,53.6,38/70,yes,20/20,VETO — above its own 10y multiple,0.0095,0.0800,no,1585.69,179.02,-4.775,5.73,55807293489
-DXCM,DEXCOM INC,healthcare,narrow,63.0,computed,0.37,52.9,37/70,yes,20/20,,0.0187,0.0800,no,84.10,17.68,-1.978,-0.88,31736039760
-EW,Edwards Lifesciences Corp,healthcare,narrow,57.0,computed,0.39,52.1,36/70,yes,20/20,,0.0304,0.0800,no,86.42,25.56,-1.076,0.05,49810182611
-ITT,ITT INC.,industrials,narrow,56.0,computed,0.39,51.4,36/70,yes,20/20,VETO — above its own 10y multiple,0.0309,0.0800,no,195.51,49.38,-1.423,1.91,17478147436
+LOGI,LOGITECH INTERNATIONAL S.A.,software,wide,89.0,computed,0.32,77.1,54/70,yes,20/20,,0.0505,0.0600,no,100.04,55.62,-0.220,-0.30,14325276412
+ULTA,"Ulta Beauty, Inc.",consumer,wide,95.0,computed,0.31,77.1,54/70,yes,20/20,,0.0531,0.0600,no,539.40,358.53,-0.038,-0.15,23063380901
+FIVE,"FIVE BELOW, INC",consumer,narrow,73.0,computed,0.35,70.7,50/70,yes,20/20,,0.0241,0.0800,no,244.17,65.35,-1.414,-0.07,13442543625
+SEIC,SEI INVESTMENTS CO,fee_business,narrow,66.7,computed,0.37,68.0,44/64,yes,20/20,,0.0335,0.0800,no,107.34,39.64,-0.715,0.59,12882858556
+COST,COSTCO WHOLESALE CORP /NEW,consumer,wide,90.0,computed,0.32,67.9,48/70,yes,20/20,VETO — above its own 10y multiple,0.0189,0.0600,no,901.24,208.94,-1.933,1.17,399680832986
+CMI,CUMMINS INC,industrials,narrow,79.0,computed,0.34,67.1,47/70,yes,20/20,VETO — above its own 10y multiple,0.0389,0.0800,no,546.91,220.99,-0.628,2.01,75290080888
+HD,"HOME DEPOT, INC.",consumer,wide,81.0,computed,0.34,67.1,47/70,yes,20/20,,0.0421,0.0600,no,304.45,159.52,-0.263,-0.06,303746618814
+MKTX,MARKETAXESS HOLDINGS INC,fee_business,narrow,75.6,computed,0.35,66.4,42/64,yes,20/20,,0.0587,0.0800,no,163.18,109.26,0.028,-1.57,5742951831
+IDXX,IDEXX LABORATORIES INC /DE,healthcare,narrow,73.0,computed,0.35,65.7,46/70,yes,20/20,,0.0222,0.0800,no,509.36,136.03,-1.419,-0.93,40127948091
+GGG,GRACO INC,industrials,narrow,73.0,computed,0.35,63.6,44/70,yes,20/20,,0.0438,0.0800,no,75.25,30.93,-0.572,-0.48,12187025256
+DCI,DONALDSON Co INC,industrials,narrow,61.0,computed,0.38,62.9,44/70,yes,20/20,,0.0362,0.0800,no,88.18,33.33,-0.646,0.46,10220457716
+UI,Ubiquiti Inc.,software,wide,80.0,computed,0.34,62.9,44/70,yes,20/20,,0.0229,0.0600,no,530.93,145.47,-1.409,-0.48,32136635818
+GWW,"W.W. GRAINGER, INC.",industrials,wide,83.0,computed,0.33,61.4,43/70,yes,20/20,VETO — above its own 10y multiple,0.0297,0.0600,no,1267.02,446.86,-0.888,2.75,59677600718
+CDNS,CADENCE DESIGN SYSTEMS INC,software,narrow,74.4,computed,0.35,60.7,42/70,yes,20/20,,0.0147,0.0800,no,284.35,48.30,-2.820,0.21,78427094453
+EME,"EMCOR Group, Inc.",industrials,narrow,79.0,computed,0.34,60.7,42/70,yes,20/20,VETO — above its own 10y multiple,0.0318,0.0800,no,743.18,277.90,-0.760,2.41,32781816666
+LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,narrow,60.0,computed,0.38,60.7,42/70,yes,20/20,,0.0361,0.0800,no,249.30,109.52,-0.411,0.62,13588285386
+TJX,TJX COMPANIES INC /DE/,consumer,narrow,66.0,computed,0.37,60.6,40/66,yes,16/20,,0.0359,0.0800,no,126.35,50.08,-0.595,,138981720928
+RMD,RESMED INC,healthcare,narrow,69.0,computed,0.36,60.0,42/70,yes,20/20,,0.0487,0.0800,no,220.45,123.48,-0.139,-1.61,31799700652
+SSD,"Simpson Manufacturing Co., Inc.",industrials,narrow,74.0,computed,0.35,60.0,42/70,yes,20/20,,0.0493,0.0800,no,172.54,100.92,-0.108,-0.19,7071701880
+THG,"HANOVER INSURANCE GROUP, INC.",financials,uncertain,28.9,computed,0.44,57.8,37/64,yes,20/20,,0.0538,0.0800,no,224.71,110.51,-0.134,-0.37,7824625834
+AIT,APPLIED INDUSTRIAL TECHNOLOGIES INC,industrials,uncertain,49.0,computed,0.40,57.1,40/70,yes,20/20,,0.0334,0.0800,no,316.70,118.45,-0.599,0.46,11622528143
+CHRW,"C. H. ROBINSON WORLDWIDE, INC.",industrials,narrow,69.0,computed,0.36,57.1,40/70,yes,20/20,VETO — above its own 10y multiple,0.0289,0.0800,no,152.28,39.55,-1.457,1.61,17794109425
+FSS,FEDERAL SIGNAL CORP /DE/,industrials,narrow,68.0,computed,0.36,57.1,40/70,yes,20/20,,0.0352,0.0800,no,113.25,46.45,-0.551,0.54,6913267486
+REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,narrow,64.0,computed,0.37,56.4,40/70,yes,20/20,,0.0645,0.0800,no,798.34,545.55,0.081,0.12,75008125040
+ISRG,INTUITIVE SURGICAL INC,healthcare,narrow,61.0,computed,0.38,55.7,39/70,yes,20/20,,0.0190,0.0800,no,362.27,75.64,-1.979,-0.71,127982030945
+FIX,COMFORT SYSTEMS USA INC,industrials,narrow,76.0,computed,0.35,53.6,38/70,yes,20/20,VETO — above its own 10y multiple,0.0095,0.0800,no,1583.00,179.02,-4.765,5.72,55712622807
+DXCM,DEXCOM INC,healthcare,narrow,63.0,computed,0.37,52.9,37/70,yes,20/20,,0.0187,0.0800,no,84.26,17.68,-1.983,-0.88,31796418865
+EW,Edwards Lifesciences Corp,healthcare,narrow,57.0,computed,0.39,52.1,36/70,yes,20/20,,0.0304,0.0800,no,86.39,25.56,-1.075,0.05,49798076065
+ITT,ITT INC.,industrials,narrow,56.0,computed,0.39,51.4,36/70,yes,20/20,VETO — above its own 10y multiple,0.0309,0.0800,no,195.76,49.38,-1.426,1.92,17500943508
 FHI,"FEDERATED HERMES, INC.",fee_business,narrow,62.2,computed,0.38,92.0,40/44,"NO — no price, score omits valuation",0/20,,,,,,,,,
 HLI,"HOULIHAN LOKEY, INC.",fee_business,wide,92.2,computed,0.32,80.7,36/44,"NO — no price, score omits valuation",0/20,,,,,,,,,
 GOOG,Alphabet Inc.,software,narrow,79.0,computed,0.34,79.0,40/50,"NO — no price, score omits valuation",0/20,,,,,,,,,
 NYT,NEW YORK TIMES CO,media,narrow,75.0,computed,0.35,75.0,38/50,"NO — no price, score omits valuation",0/20,,,,,,,,,
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,narrow,76.0,computed,0.35,72.0,36/50,"NO — no price, score omits valuation",0/20,,,,,,,,,
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,uncertain,42.0,computed,0.42,71.0,36/50,"NO — no price, score omits valuation",0/20,,,,,,,,,
-TROW,PRICE T ROWE GROUP INC,fee_business,uncertain,54.4,computed,0.39,65.6,32/48,"NO — no price, score omits valuation",4/20,,,,,107.43,,,-1.58,22917587823
+TROW,PRICE T ROWE GROUP INC,fee_business,uncertain,54.4,computed,0.39,65.6,32/48,"NO — no price, score omits valuation",4/20,,,,,107.54,,,-1.57,22939986704
