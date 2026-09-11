@@ -195,7 +195,8 @@ jobs:
           # in run 3 even though it was written.
           for f in universe.csv results.csv survivors.csv summary.md ranked.csv \
                    watchlist.csv moat.csv sector_growth.csv parser_probe.csv \
-                   overlay_applied.csv parser_probe_summary.txt track.csv; do
+                   overlay_applied.csv parser_probe_summary.txt track.csv \
+                   cyclical_normalisation.csv; do
             [ -f "out/$f" ] && git add -f "out/$f" || echo "  (no out/$f this run)"
           done
           if git diff --cached --quiet; then

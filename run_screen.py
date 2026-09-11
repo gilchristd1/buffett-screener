@@ -155,7 +155,7 @@ def rank() -> None:
     closes = U.fetch_year_end_closes([r["ticker"] for r in survivors])
     print(f"  price history for Lens C: {len(closes)}/{len(survivors)} survivors")
 
-    rows, watch, moat_rows = [], [], []
+    rows, watch, moat_rows, cyc_rows = [], [], [], []
     for r in survivors:
         t_ = r["ticker"]
         facts = _facts_for(int(universe[t_]["cik"]), zf) if t_ in universe else None
@@ -212,6 +212,25 @@ def rank() -> None:
                 st.median(rs) if rs else None, M.classify_reinvestment(s),
                 "wide" if credit else "narrow")
 
+        # Cyclicals only: the workings behind the mid-cycle cap, so the next run
+        # can say WHY it did or did not bind rather than leaving it to inference.
+        if module in config.CYCLICAL_MODULES:
+            d = M.mid_cycle_detail(s)
+            base = R.normalised_owner_earnings(s, guided, module)
+            plain = R.normalised_owner_earnings(s, guided, "")   # same call, cap off
+            cyc_rows.append({
+                "ticker": t_, "name": r["name"], "module": module,
+                "margin_years": d["margin_years"], "span": d["span"],
+                "first_year": d["first_year"] or "", "last_year": d["last_year"] or "",
+                "median_margin": f"{d['median_margin']:.4f}" if d["median_margin"] is not None else "",
+                "latest_margin": f"{d['latest_margin']:.4f}" if d["latest_margin"] is not None else "",
+                "mid_cycle_oe": f"{d['mid_cycle']:.0f}" if d["mid_cycle"] else "",
+                "uncapped_base_oe": f"{plain[0]:.0f}" if plain else "",
+                "base_oe_used": f"{base[0]:.0f}" if base else "",
+                "cap_bound": ("yes" if (base and plain and base[0] < plain[0] * 0.999)
+                              else "no" if (base and plain) else "unevaluable"),
+            })
+
         moat_rows.append({
             "ticker": t_, "name": r["name"], "module": module,
             "durability": round(dur, 1), "label": moat, "source": source,
@@ -263,6 +282,17 @@ def rank() -> None:
         with open(OUT / "moat.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(moat_rows[0]))
             w.writeheader(); w.writerows(moat_rows)
+
+    if cyc_rows:
+        cyc_rows.sort(key=lambda x: (x["cap_bound"] != "unevaluable", x["ticker"]))
+        with open(OUT / "cyclical_normalisation.csv", "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(cyc_rows[0]))
+            w.writeheader(); w.writerows(cyc_rows)
+        bound = sum(1 for x in cyc_rows if x["cap_bound"] == "yes")
+        short = sum(1 for x in cyc_rows if isinstance(x["span"], int) and x["span"] < 10)
+        print(f"\n  mid-cycle cap: bound on {bound} of {len(cyc_rows)} cyclicals; "
+              f"{short} computed over a span shorter than 10 years "
+              f"-> {OUT/'cyclical_normalisation.csv'}")
 
     # The tracking record: append-only, written on the day, never edited.
     import track as TR

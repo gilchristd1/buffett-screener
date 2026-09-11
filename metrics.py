@@ -100,18 +100,66 @@ def capitalised_rnd_balance(s: AnnualSeries, fy: int, years: int = 5) -> float:
     return total
 
 
+def effective_tax_rate(s: AnnualSeries, fy: int) -> float:
+    """
+    Tax as actually paid where it can be computed, statutory otherwise.
+
+    Broken out of nopat() because the R&D adjustment below needs the SAME rate:
+    adding back a pre-tax cost to an after-tax profit is an apples-to-oranges
+    error, and it was one until 0.8.
+    """
+    tax = _get(s, "tax_expense", fy)
+    pretax = _get(s, "pretax_income", fy)
+    if tax is not None and pretax and pretax > 0:
+        implied = tax / pretax
+        if 0.0 <= implied <= 0.50:
+            return implied
+    return 0.21  # US federal statutory default
+
+
 def nopat(s: AnnualSeries, fy: int) -> float | None:
     ebit = _get(s, "operating_income", fy)
     if ebit is None:
         return None
-    tax = _get(s, "tax_expense", fy)
-    pretax = _get(s, "pretax_income", fy)
-    rate = 0.21  # US federal statutory default
-    if tax is not None and pretax and pretax > 0:
-        implied = tax / pretax
-        if 0.0 <= implied <= 0.50:
-            rate = implied
-    return ebit * (1 - rate)
+    return ebit * (1 - effective_tax_rate(s, fy))
+
+
+def average_invested_capital(s: AnnualSeries, fy: int,
+                             capitalised_rnd: float = 0.0) -> float | None:
+    """
+    The mean of opening and closing invested capital.
+
+    NOPAT is earned ACROSS the year; invested capital is a photograph taken on
+    the last day of it. Dividing a flow by a closing stock charges the company
+    for capital it did not have for most of the year.
+
+    The direction matters and is worth stating precisely, because it is easy to
+    get backwards. Closing capital is the LARGER number for a company whose
+    capital base grew, so it UNDERSTATES a grower's return — a business ending
+    the year with 20% more capital than it started reads roughly 9% worse than
+    it earned. It OVERSTATES the return of a company whose capital shrank,
+    which is the aggressive repurchaser: equity falls through the year, the
+    closing base is small, and the ratio flatters. So this correction is not
+    uniformly conservative — it raises ROIC for reinvestors and lowers it for
+    buyback-heavy names. That is the point: it removes a bias, it does not add
+    a safety margin. The error is largest exactly where it matters most — fast
+    reinvestors, companies straight after an acquisition, and the C7 cohort.
+
+    Falls back to closing capital when the prior year is missing, rather than
+    returning nothing — the first year of a ten-year series has no opening
+    balance and rejecting it would cost a year of history on every company.
+    """
+    close = invested_capital(s, fy, capitalised_rnd)
+    if close is None:
+        return None
+    # The prior year's capitalised-R&D balance, not this year's — the two
+    # differ by a year of spend and using the same figure for both would put
+    # capital on the opening balance sheet that had not been spent yet.
+    prior_crd = capitalised_rnd_balance(s, fy - 1) if capitalised_rnd else 0.0
+    open_ = invested_capital(s, fy - 1, prior_crd)
+    if open_ is None:
+        return close
+    return (open_ + close) / 2
 
 
 def roic(s: AnnualSeries, fy: int, capitalise_rnd: bool = False) -> float | None:
@@ -120,14 +168,19 @@ def roic(s: AnnualSeries, fy: int, capitalise_rnd: bool = False) -> float | None
         return None
     crd = capitalised_rnd_balance(s, fy) if capitalise_rnd else 0.0
     if capitalise_rnd:
-        # R&D added back to NOPAT, less the year's amortisation charge
+        # R&D added back to NOPAT, less the year's amortisation charge — and
+        # TAX-EFFECTED, because NOPAT is after tax and R&D is deducted before
+        # it. Adding back the gross spend credited the company with tax relief
+        # it never received, inflating software ROIC by roughly the tax rate
+        # times the net R&D adjustment. The capital base is not tax-effected:
+        # the cash spent on R&D left the business in full.
         rnd = _get(s, "research_development", fy)
         if rnd:
             amort = sum(
                 abs(_get(s, "research_development", fy - k) or 0.0) / 5 for k in range(5)
             )
-            np_ = np_ + abs(rnd) - amort
-    ic = invested_capital(s, fy, crd)
+            np_ = np_ + (abs(rnd) - amort) * (1 - effective_tax_rate(s, fy))
+    ic = average_invested_capital(s, fy, crd)
     return np_ / ic if ic else None
 
 
@@ -379,6 +432,45 @@ def mid_cycle_owner_earnings(s: AnnualSeries, years: int = 10) -> float | None:
     if not latest_rev or latest_rev <= 0:
         return None
     return statistics.median(margins) * latest_rev
+
+
+def mid_cycle_detail(s: AnnualSeries, years: int = 10) -> dict:
+    """
+    The same calculation with its workings exposed. Writes nothing, decides
+    nothing, changes no gate.
+
+    It exists because run 11 shipped mid-cycle normalisation and Toll Brothers'
+    owner-earnings yield moved from 10.05% to 9.84% — a move entirely explained
+    by its share price rising that day. The normalisation did not bind, and the
+    committed output could not say whether that was because the margin data was
+    too short, or because the median margin genuinely was the current one. A
+    threshold whose failure to bind is invisible is not calibrated, it is
+    assumed. §13 requires calibrating against committed output, so the output
+    has to carry the workings.
+
+    The span matters more than the count. Ten margins drawn from 2016–2025 is a
+    cycle; five drawn from 2021–2025 is one leg of a housing boom, and the
+    median of a boom is a boom.
+    """
+    ys = common_years(s, ["net_income", "depreciation_amortisation",
+                          "capex", "revenue"], years)
+    margins, margin_years = [], []
+    for y in ys:
+        oe, rev = owner_earnings(s, y), _get(s, "revenue", y)
+        if oe is not None and rev and rev > 0:
+            margins.append(oe / rev)
+            margin_years.append(y)
+    latest_rev = _get(s, "revenue", ys[-1]) if ys else None
+    return {
+        "margin_years": len(margins),
+        "first_year": margin_years[0] if margin_years else None,
+        "last_year": margin_years[-1] if margin_years else None,
+        "span": (margin_years[-1] - margin_years[0] + 1) if margin_years else 0,
+        "median_margin": statistics.median(margins) if margins else None,
+        "latest_margin": margins[-1] if margins else None,
+        "latest_revenue": latest_rev,
+        "mid_cycle": mid_cycle_owner_earnings(s, years),
+    }
 
 
 # ------------------------------------------------- capital allocation --

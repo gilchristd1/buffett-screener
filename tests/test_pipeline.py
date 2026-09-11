@@ -480,6 +480,72 @@ def main():
                           abs(f_cyc[0] - f_non[0]) / f_non[0] < 0.12,
                           f"{f_cyc[0]:,.0f} vs {f_non[0]:,.0f}")
 
+    print("\n=== ROIC: average capital, and R&D added back after tax ===")
+    # Open item 22 from v0.7. Two defects in one ratio, pulling in OPPOSITE
+    # directions, which is why neither showed up as an obviously wrong number.
+    grower = secdata.extract(make_companyfacts(80, "Grower Inc", growth=1.06))
+    fy = 2025
+
+    close_ic = MM.invested_capital(grower, fy)
+    avg_ic = MM.average_invested_capital(grower, fy)
+    failures += not check("average invested capital sits below closing for a grower",
+                          avg_ic < close_ic, f"{avg_ic:,.0f} vs {close_ic:,.0f}")
+    # ...so the corrected ROIC is HIGHER. Closing capital charged the company
+    # for money it did not have for most of the year. Stating the direction in
+    # the test because it is easy to assume the fix must be the harsher one.
+    np_ = MM.nopat(grower, fy)
+    failures += not check("so the corrected ROIC exceeds the closing-capital version",
+                          MM.roic(grower, fy) > np_ / close_ic,
+                          f"{MM.roic(grower, fy):.2%} vs {np_ / close_ic:.2%}")
+
+    # The first year of a series has no opening balance. It must fall back to
+    # closing capital rather than dropping the year — ten years of history is
+    # what C3, C7 and the durability score all depend on.
+    first = min(grower.series("total_equity"))
+    failures += not check("the earliest year falls back to closing capital, not None",
+                          MM.average_invested_capital(grower, first) is not None)
+
+    # R&D: the addback must be tax-effected, because NOPAT is after tax.
+    r_taxed = MM.roic(grower, fy, capitalise_rnd=True)
+    rate = MM.effective_tax_rate(grower, fy)
+    rnd = abs(grower.series("research_development")[fy])
+    amort = sum(abs(grower.series("research_development").get(fy - k, 0.0)) / 5
+                for k in range(5))
+    crd = MM.capitalised_rnd_balance(grower, fy)
+    gross = (np_ + rnd - amort) / MM.average_invested_capital(grower, fy, crd)
+    failures += not check("the tax rate is the same one NOPAT used",
+                          0.0 < rate <= 0.50, f"{rate:.1%}")
+    failures += not check("tax-effecting the R&D addback lowers software ROIC",
+                          r_taxed < gross, f"{r_taxed:.2%} vs {gross:.2%} untaxed")
+    # The capital base is NOT tax-effected — the cash spent on R&D left in full.
+    failures += not check("the capitalised R&D balance still enters capital gross",
+                          MM.average_invested_capital(grower, fy, crd) >
+                          MM.average_invested_capital(grower, fy),
+                          f"{crd:,.0f} of R&D capital")
+
+    print("\n=== the mid-cycle cap must report whether it bound ===")
+    # Run 11 shipped the cap and Toll Brothers' yield moved 10.05% -> 9.84%,
+    # explained entirely by its share price that day. The output could not say
+    # whether the cap failed to bind because the data was too short or because
+    # the median margin genuinely was the current one. A threshold whose
+    # failure to bind is invisible is assumed, not calibrated.
+    d_boom = MM.mid_cycle_detail(boom)
+    failures += not check("the detail records how many years the median rests on",
+                          d_boom["margin_years"] >= 5, f"{d_boom['margin_years']} years")
+    failures += not check("and the span those years cover, not just the count",
+                          d_boom["span"] >= d_boom["margin_years"],
+                          f"span {d_boom['span']}")
+    failures += not check("in a boom the latest margin sits above the median",
+                          d_boom["latest_margin"] > d_boom["median_margin"],
+                          f"{d_boom['latest_margin']:.1%} vs {d_boom['median_margin']:.1%}")
+    failures += not check("and the reported mid-cycle matches the value used",
+                          abs(d_boom["mid_cycle"] - mid) < 1e-6)
+    d_flat = MM.mid_cycle_detail(flat)
+    failures += not check("a steady business shows a latest margin near its median",
+                          abs(d_flat["latest_margin"] - d_flat["median_margin"])
+                          / d_flat["median_margin"] < 0.02,
+                          f"{d_flat['latest_margin']:.2%} vs {d_flat['median_margin']:.2%}")
+
     print("\n=== C10: dated facts from outside the filings ===")
     import overlay as OV
     steady0 = secdata.extract(make_companyfacts(85, "Overlay Co"))
