@@ -1863,8 +1863,8 @@ ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C5,True,0.8867687694278636,gross profit
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C7,True,0.2120875792768031,"capital returned, not retained; owner earnings/share CAGR 21.2% vs 5% min"
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C8,True,0.0,goodwill+intangibles 0.0% of assets
-ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C9,True,0.03236911344997173,2Q to 2026-08-01: revenue +3.2% YoY; operating income +10.8% YoY; margin 14.3% vs 13.4%
-ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C10,True,,no overlay entry
+ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+ANF,ABERCROMBIE & FITCH CO /DE/,consumer,C10,True,,guidance raised; ENTERED THE BUY LIST IN RUN 12 AND ITS CURRENT EARNINGS ARE PART GOVERNMENT CHEQ
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,M-ROIC,True,0.15814551143346026,median ROIC 15.8% vs 15%; min of last 5y 18.8% vs 12%
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,M-GROWTH,True,0.04114811297961807,revenue CAGR 4.1% (10y) vs 3% min
 ANF,ABERCROMBIE & FITCH CO /DE/,consumer,M-SBC,True,,not applicable to this sector
@@ -5784,7 +5784,7 @@ CDNS,CADENCE DESIGN SYSTEMS INC,software,C6,True,,"MANUAL: check restatements, a
 CDNS,CADENCE DESIGN SYSTEMS INC,software,C7,True,0.49451618723459395,incremental ROIC on retained capital 49.5% vs 10% min
 CDNS,CADENCE DESIGN SYSTEMS INC,software,C8,True,0.3415064963103069,goodwill+intangibles 34.2% of assets
 CDNS,CADENCE DESIGN SYSTEMS INC,software,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
-CDNS,CADENCE DESIGN SYSTEMS INC,software,C10,True,,no overlay entry
+CDNS,CADENCE DESIGN SYSTEMS INC,software,C10,True,,"guidance raised; Q2 2026 revenue $1.584bn +24%, GAAP operating income $450.3m vs $241.8m, GAAP ma"
 CDNS,CADENCE DESIGN SYSTEMS INC,software,M-ROIC,True,0.49225646988546207,median ROIC 49.2% vs 20% (R&D capitalised); min of last 5y 43.9% vs 12%
 CDNS,CADENCE DESIGN SYSTEMS INC,software,M-GROWTH,True,0.1202185081990248,revenue CAGR 12.0% (10y) vs 8% min
 CDNS,CADENCE DESIGN SYSTEMS INC,software,M-SBC,True,0.08429147749406196,SBC/revenue 8.4% vs 10% max
@@ -6728,7 +6728,7 @@ CMI,CUMMINS INC,industrials,C6,True,,"MANUAL: check restatements, auditor change
 CMI,CUMMINS INC,industrials,C7,True,0.48710702854450255,incremental ROIC on retained capital 48.7% vs 10% min
 CMI,CUMMINS INC,industrials,C8,True,0.12917745351847493,goodwill+intangibles 12.9% of assets
 CMI,CUMMINS INC,industrials,C9,True,0.06172325622881614,2Q to 2026-06-30: revenue +6.2% YoY; operating income -5.6% YoY; margin 12.5% vs 14.0% [cyclical bar]
-CMI,CUMMINS INC,industrials,C10,True,,no overlay entry
+CMI,CUMMINS INC,industrials,C10,True,,"guidance raised; Q2 2026 record revenue $9.5bn +9%, net income $932m vs $890m. Guidance raised at"
 CMI,CUMMINS INC,industrials,M-ROIC,True,0.3444799360434019,median ROIC 34.4% vs 13%; min of last 10y 13.8% vs 0%
 CMI,CUMMINS INC,industrials,M-GROWTH,True,0.050165511141944785,revenue CAGR 5.0% (peak-to-peak) vs 3% min
 CMI,CUMMINS INC,industrials,M-SBC,True,,not applicable to this sector
@@ -7352,7 +7352,7 @@ COST,COSTCO WHOLESALE CORP /NEW,consumer,C6,True,,"MANUAL: check restatements, a
 COST,COSTCO WHOLESALE CORP /NEW,consumer,C7,True,0.5732152733316004,incremental ROIC on retained capital 57.3% vs 10% min
 COST,COSTCO WHOLESALE CORP /NEW,consumer,C8,True,0.0,goodwill+intangibles 0.0% of assets
 COST,COSTCO WHOLESALE CORP /NEW,consumer,C9,True,0.09705995906472964,3Q to 2026-05-10: revenue +9.7% YoY; operating income +12.0% YoY; margin 3.8% vs 3.7%
-COST,COSTCO WHOLESALE CORP /NEW,consumer,C10,True,,no overlay entry
+COST,COSTCO WHOLESALE CORP /NEW,consumer,C10,True,,"guidance none; STALE BY DESIGN - Q4 FY26 reports 2026-09-24, so this row predates it. Q3 FY26 t"
 COST,COSTCO WHOLESALE CORP /NEW,consumer,M-ROIC,True,0.3485269488091212,median ROIC 34.9% vs 15%; min of last 5y 37.1% vs 12%
 COST,COSTCO WHOLESALE CORP /NEW,consumer,M-GROWTH,True,0.0900593060353001,revenue CAGR 9.0% (10y) vs 3% min
 COST,COSTCO WHOLESALE CORP /NEW,consumer,M-SBC,True,,not applicable to this sector
@@ -8744,7 +8744,7 @@ DCI,DONALDSON Co INC,industrials,C6,True,,"MANUAL: check restatements, auditor c
 DCI,DONALDSON Co INC,industrials,C7,True,0.1631007292553222,incremental ROIC on retained capital 16.3% vs 10% min
 DCI,DONALDSON Co INC,industrials,C8,True,0.1985086658605401,goodwill+intangibles 19.9% of assets
 DCI,DONALDSON Co INC,industrials,C9,True,0.04302265515460113,3Q to 2026-04-30: revenue +4.3% YoY; operating income +23.2% YoY; margin 15.0% vs 12.7% [cyclical bar]
-DCI,DONALDSON Co INC,industrials,C10,True,,no overlay entry
+DCI,DONALDSON Co INC,industrials,C10,True,,"guidance raised; CEO changed within 12 months; July fiscal year end. Q4 FY26 to 2026-07-31: record sales $1,058.8m +8.0%, opera"
 DCI,DONALDSON Co INC,industrials,M-ROIC,True,0.2172219179269576,median ROIC 21.7% vs 13%; min of last 10y 19.1% vs 0%
 DCI,DONALDSON Co INC,industrials,M-GROWTH,True,0.030635596964986966,revenue CAGR 3.1% (peak-to-peak) vs 3% min
 DCI,DONALDSON Co INC,industrials,M-SBC,True,,not applicable to this sector
@@ -9095,8 +9095,8 @@ DKS,"DICK'S SPORTING GOODS, INC.",consumer,C5,True,0.46140521942797064,gross pro
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,C7,True,0.19148738180145886,incremental ROIC on retained capital 19.1% vs 10% min
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,C8,True,0.0937668835980176,goodwill+intangibles 9.4% of assets
-DKS,"DICK'S SPORTING GOODS, INC.",consumer,C9,True,0.5761409163922442,2Q to 2026-08-01: revenue +57.6% YoY; operating income +8.9% YoY; margin 8.3% vs 12.0%
-DKS,"DICK'S SPORTING GOODS, INC.",consumer,C10,True,,no overlay entry
+DKS,"DICK'S SPORTING GOODS, INC.",consumer,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+DKS,"DICK'S SPORTING GOODS, INC.",consumer,C10,True,,"guidance cut; 1 consecutive cut(s); FY26 non-GAAP EPS guidance CUT to $11.00-12.00 from $13.50-14.50, a 18% midpoint"
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,M-ROIC,True,0.28619907846316317,median ROIC 28.6% vs 15%; min of last 5y 28.6% vs 12%
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,M-GROWTH,True,0.0900133073470697,revenue CAGR 9.0% (10y) vs 3% min
 DKS,"DICK'S SPORTING GOODS, INC.",consumer,M-SBC,True,,not applicable to this sector
@@ -10056,7 +10056,7 @@ EME,"EMCOR Group, Inc.",industrials,C6,True,,"MANUAL: check restatements, audito
 EME,"EMCOR Group, Inc.",industrials,C7,True,0.6927513395634745,incremental ROIC on retained capital 69.3% vs 10% min
 EME,"EMCOR Group, Inc.",industrials,C8,True,0.2713522473849202,goodwill+intangibles 27.1% of assets
 EME,"EMCOR Group, Inc.",industrials,C9,True,0.19718526165438788,2Q to 2026-06-30: revenue +19.7% YoY; operating income +29.6% YoY; margin 9.7% vs 9.0% [cyclical bar]
-EME,"EMCOR Group, Inc.",industrials,C10,True,,no overlay entry
+EME,"EMCOR Group, Inc.",industrials,C10,True,,"guidance raised; Q2 2026 revenue $5.15bn +19.8%, operating income $547.3m at 10.6% margin vs 9.6%"
 EME,"EMCOR Group, Inc.",industrials,M-ROIC,True,0.2522373180612356,median ROIC 25.2% vs 13%; min of last 10y 9.5% vs 0%
 EME,"EMCOR Group, Inc.",industrials,M-GROWTH,True,0.10811723146866115,revenue CAGR 10.8% (peak-to-peak) vs 3% min
 EME,"EMCOR Group, Inc.",industrials,M-SBC,True,,not applicable to this sector
@@ -11352,7 +11352,7 @@ FHI,"FEDERATED HERMES, INC.",fee_business,C6,True,,"MANUAL: check restatements, 
 FHI,"FEDERATED HERMES, INC.",fee_business,C7,True,0.4385344003829157,incremental ROIC on retained capital 43.9% vs 10% min
 FHI,"FEDERATED HERMES, INC.",fee_business,C8,True,0.530925562173866,goodwill+intangibles 53.1% of assets; ROIC incl. goodwill 40.9%
 FHI,"FEDERATED HERMES, INC.",fee_business,C9,True,0.1571800033946893,2Q to 2026-06-30: revenue +15.7% YoY; operating income +4.2% YoY; margin 26.4% vs 29.3%
-FHI,"FEDERATED HERMES, INC.",fee_business,C10,True,,no overlay entry
+FHI,"FEDERATED HERMES, INC.",fee_business,C10,True,,"guidance none; No numerical guidance is issued. Q2 2026 revenue $502.8m +18%, operating income "
 FHI,"FEDERATED HERMES, INC.",fee_business,M-ROIC,True,0.2632682576446652,"median ROE 26.3% vs 15% min (fee business — ROE, not ROIC)"
 FHI,"FEDERATED HERMES, INC.",fee_business,M-GROWTH,True,0.06869454516051254,revenue CAGR 6.9% (10y) vs 4% min
 FHI,"FEDERATED HERMES, INC.",fee_business,M-SBC,True,,not applicable to this sector
@@ -12919,8 +12919,8 @@ GGG,GRACO INC,industrials,C5,True,0.3583036829583388,gross profit/assets 35.8% v
 GGG,GRACO INC,industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 GGG,GRACO INC,industrials,C7,True,0.2732914411832516,incremental ROIC on retained capital 27.3% vs 10% min
 GGG,GRACO INC,industrials,C8,True,0.2715582404627596,goodwill+intangibles 27.2% of assets
-GGG,GRACO INC,industrials,C9,True,0.027821360070539702,2Q to 2026-06-26: revenue +2.8% YoY; operating income +3.8% YoY; margin 27.7% vs 27.4% [cyclical bar]
-GGG,GRACO INC,industrials,C10,True,,no overlay entry
+GGG,GRACO INC,industrials,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+GGG,GRACO INC,industrials,C10,True,,guidance held; Verified from the release: 'Operating earnings increased 11 percent for the seco
 GGG,GRACO INC,industrials,M-ROIC,True,0.3294238952348715,median ROIC 32.9% vs 13%; min of last 10y 10.6% vs 0%
 GGG,GRACO INC,industrials,M-GROWTH,True,0.04411540805929981,revenue CAGR 4.4% (peak-to-peak) vs 3% min
 GGG,GRACO INC,industrials,M-SBC,True,,not applicable to this sector
@@ -13319,8 +13319,8 @@ GOOG,Alphabet Inc.,software,C5,True,0.43256824191335813,gross profit/assets 43.3
 GOOG,Alphabet Inc.,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 GOOG,Alphabet Inc.,software,C7,True,0.40039955445338377,incremental ROIC on retained capital 40.0% vs 10% min
 GOOG,Alphabet Inc.,software,C8,True,0.05607435816026381,goodwill+intangibles 5.6% of assets
-GOOG,Alphabet Inc.,software,C9,True,0.23052362023336292,2Q to 2026-06-30: revenue +23.1% YoY; operating income +30.0% YoY; margin 35.0% vs 33.1%
-GOOG,Alphabet Inc.,software,C10,True,,no overlay entry
+GOOG,Alphabet Inc.,software,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+GOOG,Alphabet Inc.,software,C10,True,,"guidance raised; NET INCOME IS DISTORTED BELOW THE OPERATING LINE, which is a different distortio"
 GOOG,Alphabet Inc.,software,M-ROIC,True,0.2788832362388627,median ROIC 27.9% vs 20% (R&D capitalised); min of last 5y 28.2% vs 12%
 GOOG,Alphabet Inc.,software,M-GROWTH,True,0.1830771631182213,revenue CAGR 18.3% (10y) vs 8% min
 GOOG,Alphabet Inc.,software,M-SBC,True,0.065096652172174,SBC/revenue 6.5% vs 10% max
@@ -13783,8 +13783,8 @@ GWW,"W.W. GRAINGER, INC.",industrials,C5,True,0.7820798928810533,gross profit/as
 GWW,"W.W. GRAINGER, INC.",industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 GWW,"W.W. GRAINGER, INC.",industrials,C7,True,0.5131932801605619,incremental ROIC on retained capital 51.3% vs 10% min
 GWW,"W.W. GRAINGER, INC.",industrials,C8,True,0.06973889756750726,goodwill+intangibles 7.0% of assets
-GWW,"W.W. GRAINGER, INC.",industrials,C9,True,0.1019187358916478,2Q to 2026-06-30: revenue +10.2% YoY; operating income +18.5% YoY; margin 16.4% vs 15.2% [cyclical bar]
-GWW,"W.W. GRAINGER, INC.",industrials,C10,True,,no overlay entry
+GWW,"W.W. GRAINGER, INC.",industrials,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+GWW,"W.W. GRAINGER, INC.",industrials,C10,True,,guidance raised; Verified verbatim: 'Results were inclusive of refunds recognized on IEEPA tariff
 GWW,"W.W. GRAINGER, INC.",industrials,M-ROIC,True,0.28159160440073955,median ROIC 28.2% vs 13%; min of last 10y 19.6% vs 0%
 GWW,"W.W. GRAINGER, INC.",industrials,M-GROWTH,True,0.06293749373396262,revenue CAGR 6.3% (peak-to-peak) vs 3% min
 GWW,"W.W. GRAINGER, INC.",industrials,M-SBC,True,,not applicable to this sector
@@ -14087,8 +14087,8 @@ HD,"HOME DEPOT, INC.",consumer,C5,True,0.5546041885579334,gross profit/assets 55
 HD,"HOME DEPOT, INC.",consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 HD,"HOME DEPOT, INC.",consumer,C7,True,0.14825671828219392,incremental ROIC on retained capital 14.8% vs 10% min
 HD,"HOME DEPOT, INC.",consumer,C8,True,0.31089014700984824,goodwill+intangibles 31.1% of assets
-HD,"HOME DEPOT, INC.",consumer,C9,True,0.05277624422961713,2Q to 2026-08-02: revenue +5.3% YoY; operating income +1.1% YoY; margin 13.2% vs 13.7%
-HD,"HOME DEPOT, INC.",consumer,C10,True,,no overlay entry
+HD,"HOME DEPOT, INC.",consumer,C9,,,"current period's profit is inflated by a one-off gain (see overlay.csv) — year-on-year comparison is not meaningful, so this is unevaluable rather than passed"
+HD,"HOME DEPOT, INC.",consumer,C10,True,,"guidance held; CEO changed within 12 months; Q2 FY26 to 2026-08-02: net sales $47.9bn +5.7%, operating income $6.839bn at 14."
 HD,"HOME DEPOT, INC.",consumer,M-ROIC,True,0.5025206880878073,median ROIC 50.3% vs 15%; min of last 5y 27.1% vs 12%
 HD,"HOME DEPOT, INC.",consumer,M-GROWTH,True,0.06404801796204951,revenue CAGR 6.4% (10y) vs 3% min
 HD,"HOME DEPOT, INC.",consumer,M-SBC,True,,not applicable to this sector
@@ -14264,7 +14264,7 @@ HLI,"HOULIHAN LOKEY, INC.",fee_business,C6,True,,"MANUAL: check restatements, au
 HLI,"HOULIHAN LOKEY, INC.",fee_business,C7,True,0.5536666388365634,incremental ROIC on retained capital 55.4% vs 10% min
 HLI,"HOULIHAN LOKEY, INC.",fee_business,C8,True,0.3239432762700005,goodwill+intangibles 32.4% of assets
 HLI,"HOULIHAN LOKEY, INC.",fee_business,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
-HLI,"HOULIHAN LOKEY, INC.",fee_business,C10,True,,no overlay entry
+HLI,"HOULIHAN LOKEY, INC.",fee_business,C10,True,,"guidance none; Q1 FY27 to 2026-06-30: revenue $511m vs $605m, DOWN 15.5%; operating income $78m"
 HLI,"HOULIHAN LOKEY, INC.",fee_business,M-ROIC,True,0.18276137493499955,"median ROE 18.3% vs 15% min (fee business — ROE, not ROIC)"
 HLI,"HOULIHAN LOKEY, INC.",fee_business,M-GROWTH,True,0.12989059425805238,revenue CAGR 13.0% (10y) vs 4% min
 HLI,"HOULIHAN LOKEY, INC.",fee_business,M-SBC,True,,not applicable to this sector
@@ -15240,7 +15240,7 @@ IDXX,IDEXX LABORATORIES INC /DE,healthcare,C6,True,,"MANUAL: check restatements,
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,C7,True,0.5882459901359561,incremental ROIC on retained capital 58.8% vs 10% min
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,C8,True,0.15633681801645538,goodwill+intangibles 15.6% of assets
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,C9,True,0.11837510982577792,2Q to 2026-06-30: revenue +11.8% YoY; operating income +14.3% YoY; margin 33.4% vs 32.7%
-IDXX,IDEXX LABORATORIES INC /DE,healthcare,C10,True,,no overlay entry
+IDXX,IDEXX LABORATORIES INC /DE,healthcare,C10,True,,"guidance raised; CEO changed within 12 months; Q2 2026 revenue $1,217m +10% reported, +9% organic; operating income $426m +14%,"
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,M-ROIC,True,0.6156997930458001,median ROIC 61.6% vs 15%; min of last 5y 49.4% vs 12%
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,M-GROWTH,True,0.10387753713074033,revenue CAGR 10.4% (10y) vs 3% min
 IDXX,IDEXX LABORATORIES INC /DE,healthcare,M-SBC,True,,not applicable to this sector
@@ -17608,7 +17608,7 @@ LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C6,True,,"MANUAL: check restateme
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C7,True,0.24829116899015577,incremental ROIC on retained capital 24.8% vs 10% min
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C8,True,0.30101570398167926,goodwill+intangibles 30.1% of assets
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C9,True,0.11850395186762364,2Q to 2026-06-30: revenue +11.9% YoY; operating income +13.9% YoY; margin 17.4% vs 17.1% [cyclical bar]
-LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C10,True,,no overlay entry
+LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,C10,True,,"guidance raised; Q2 2026 revenue $1,219.7m +12.0%, operating income $220.6m +14.8%, margin 18.1% "
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,M-ROIC,True,0.2946977799064282,median ROIC 29.5% vs 13%; min of last 10y 17.1% vs 0%
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,M-GROWTH,True,0.030804311324105216,revenue CAGR 3.1% (peak-to-peak) vs 3% min
 LECO,LINCOLN ELECTRIC HOLDINGS INC,industrials,M-SBC,True,,not applicable to this sector
@@ -19656,7 +19656,7 @@ MKTX,MARKETAXESS HOLDINGS INC,fee_business,C6,True,,"MANUAL: check restatements,
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,C7,True,0.19202936807128151,incremental ROIC on retained capital 19.2% vs 10% min
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,C8,True,0.2037825484292098,goodwill+intangibles 20.4% of assets
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,C9,True,0.055502081590886876,2Q to 2026-06-30: revenue +5.6% YoY; operating income +5.9% YoY; margin 42.2% vs 42.1%
-MKTX,MARKETAXESS HOLDINGS INC,fee_business,C10,True,,no overlay entry
+MKTX,MARKETAXESS HOLDINGS INC,fee_business,C10,False,,"guidance withdrawn; DEFINITIVE AGREEMENT FOR ICE TO ACQUIRE MARKETAXESS, announced with Q2 results o — flagged as disqualifying"
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,M-ROIC,True,0.2568662819790506,"median ROE 25.7% vs 15% min (fee business — ROE, not ROIC)"
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,M-GROWTH,True,0.10813452219089315,revenue CAGR 10.8% (10y) vs 4% min
 MKTX,MARKETAXESS HOLDINGS INC,fee_business,M-SBC,True,,not applicable to this sector
@@ -22248,7 +22248,7 @@ NYT,NEW YORK TIMES CO,media,C6,True,,"MANUAL: check restatements, auditor change
 NYT,NEW YORK TIMES CO,media,C7,True,0.25293015859027834,incremental ROIC on retained capital 25.3% vs 10% min
 NYT,NEW YORK TIMES CO,media,C8,True,0.21306934393027904,goodwill+intangibles 21.3% of assets
 NYT,NEW YORK TIMES CO,media,C9,True,0.11568313406966202,2Q to 2026-06-30: revenue +11.6% YoY; operating income +26.3% YoY; margin 14.1% vs 12.5%
-NYT,NEW YORK TIMES CO,media,C10,True,,no overlay entry
+NYT,NEW YORK TIMES CO,media,C10,True,,"guidance none; Q2 2026 revenue $762.5m +11.2%, GAAP operating profit $118.0m +10.8%, adjusted o"
 NYT,NEW YORK TIMES CO,media,M-ROIC,True,0.1982739043779036,median ROIC 19.8% vs 12%; min of last 10y 14.0% vs 5%
 NYT,NEW YORK TIMES CO,media,M-GROWTH,True,0.0598794178942188,revenue CAGR 6.0% (10y) vs 2% min
 NYT,NEW YORK TIMES CO,media,M-SBC,True,,not applicable to this sector
@@ -25784,7 +25784,7 @@ REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C6,True,,"MANUAL: check restat
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C7,True,0.1103802482560899,incremental ROIC on retained capital 11.0% vs 10% min
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C8,True,0.031001979846494093,goodwill+intangibles 3.1% of assets
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C9,True,0.17776650806199013,2Q to 2026-06-30: revenue +17.8% YoY; operating income +15.9% YoY; margin 24.5% vs 24.9%
-REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C10,True,,no overlay entry
+REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,C10,True,,"guidance none; Q2 2026 revenue $4.3bn +17%, operating income $1.3bn vs $1.1bn. No full-year gui"
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,M-ROIC,True,0.28646650457574674,median ROIC 28.6% vs 15%; min of last 5y 13.1% vs 12%
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,M-GROWTH,True,0.1333024830413807,revenue CAGR 13.3% (10y) vs 3% min
 REGN,"REGENERON PHARMACEUTICALS, INC.",healthcare,M-SBC,True,,not applicable to this sector
@@ -30600,7 +30600,7 @@ TROW,PRICE T ROWE GROUP INC,fee_business,C6,True,,"MANUAL: check restatements, a
 TROW,PRICE T ROWE GROUP INC,fee_business,C7,True,0.13389570238492937,incremental ROIC on retained capital 13.4% vs 10% min
 TROW,PRICE T ROWE GROUP INC,fee_business,C8,True,0.2033914850297731,goodwill+intangibles 20.3% of assets
 TROW,PRICE T ROWE GROUP INC,fee_business,C9,True,0.0794907088781831,2Q to 2026-06-30: revenue +7.9% YoY; operating income +13.6% YoY; margin 32.4% vs 30.8%
-TROW,PRICE T ROWE GROUP INC,fee_business,C10,True,,no overlay entry
+TROW,PRICE T ROWE GROUP INC,fee_business,C10,True,,"guidance none; Q2 2026 revenue $1.907bn +10.7%, GAAP operating income $540.5m +13.0%, record AU"
 TROW,PRICE T ROWE GROUP INC,fee_business,M-ROIC,True,0.24987114670150076,"median ROE 25.0% vs 15% min (fee business — ROE, not ROIC)"
 TROW,PRICE T ROWE GROUP INC,fee_business,M-GROWTH,True,0.057034379685803493,revenue CAGR 5.7% (10y) vs 4% min
 TROW,PRICE T ROWE GROUP INC,fee_business,M-SBC,True,,not applicable to this sector
@@ -31400,7 +31400,7 @@ UI,Ubiquiti Inc.,software,C6,True,,"MANUAL: check restatements, auditor change, 
 UI,Ubiquiti Inc.,software,C7,True,1.0129965396296516,incremental ROIC on retained capital 101.3% vs 10% min
 UI,Ubiquiti Inc.,software,C8,True,0.0007906504897210887,goodwill+intangibles 0.1% of assets
 UI,Ubiquiti Inc.,software,C9,True,0.2879453348861023,3Q to 2026-03-31: revenue +28.8% YoY; operating income +47.1% YoY; margin 36.2% vs 31.7%
-UI,Ubiquiti Inc.,software,C10,True,,no overlay entry
+UI,Ubiquiti Inc.,software,C10,True,,"guidance none; June fiscal year end. Q4 FY26 to 2026-06-30: revenue $937.3m vs $759.2m +23.5%, "
 UI,Ubiquiti Inc.,software,M-ROIC,True,0.7651965261863003,median ROIC 76.5% vs 20% (R&D capitalised); min of last 5y 37.6% vs 12%
 UI,Ubiquiti Inc.,software,M-GROWTH,True,0.17256477494045552,revenue CAGR 17.3% (10y) vs 8% min
 UI,Ubiquiti Inc.,software,M-SBC,True,0.0028008058922614526,SBC/revenue 0.3% vs 10% max
@@ -33720,7 +33720,7 @@ WTS,WATTS WATER TECHNOLOGIES INC,industrials,C6,True,,"MANUAL: check restatement
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,C7,True,0.494960255119481,incremental ROIC on retained capital 49.5% vs 10% min
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,C8,True,0.37296959600166596,goodwill+intangibles 37.3% of assets
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,C9,True,0.1987184821502872,2Q to 2026-06-28: revenue +19.9% YoY; operating income +28.7% YoY; margin 19.9% vs 18.6% [cyclical bar]
-WTS,WATTS WATER TECHNOLOGIES INC,industrials,C10,True,,no overlay entry
+WTS,WATTS WATER TECHNOLOGIES INC,industrials,C10,True,,"guidance raised; Q2 2026 to 2026-06-28: net sales $763.2m +19% reported, +12% organic; operating "
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,M-ROIC,True,0.1467696199389145,median ROIC 14.7% vs 13%; min of last 10y 7.9% vs 0%
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,M-GROWTH,True,0.04430106915911791,revenue CAGR 4.4% (peak-to-peak) vs 3% min
 WTS,WATTS WATER TECHNOLOGIES INC,industrials,M-SBC,True,,not applicable to this sector
