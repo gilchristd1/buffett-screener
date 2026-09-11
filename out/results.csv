@@ -727,7 +727,7 @@ AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C5,True,0.5453029739413043,gross prof
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C7,False,-0.06589279388412124,incremental ROIC on retained capital -6.6% vs 10% min
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C8,True,0.06552567785957981,goodwill+intangibles 6.6% of assets
-AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C9,True,0.08527713192829811,2Q to 2026-08-01: revenue +8.5% YoY; operating income +1238.4% YoY; margin 9.3% vs 0.8%
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,C10,True,,no overlay entry
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,M-ROIC,False,0.222555564816023,median ROIC 22.3% vs 15%; min of last 5y 11.6% vs 12%
 AEO,AMERICAN EAGLE OUTFITTERS INC,consumer,M-GROWTH,True,0.046479206754238556,revenue CAGR 4.6% (10y) vs 3% min
@@ -2935,7 +2935,7 @@ AVAV,AeroVironment Inc,industrials,C5,True,0.2794981591951647,gross profit/asset
 AVAV,AeroVironment Inc,industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 AVAV,AeroVironment Inc,industrials,C7,False,-0.060161517379216274,incremental ROIC on retained capital -6.0% vs 10% min
 AVAV,AeroVironment Inc,industrials,C8,False,0.5988557818421751,goodwill+intangibles 59.9% of assets; ROIC incl. goodwill -5.5%
-AVAV,AeroVironment Inc,industrials,C9,False,-10.32448661872637,3Q to 2026-01-31: revenue +144.7% YoY; operating income -1132.4% YoY; margin -20.9% vs 4.9% [cyclical bar] — earnings break
+AVAV,AeroVironment Inc,industrials,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
 AVAV,AeroVironment Inc,industrials,C10,True,,no overlay entry
 AVAV,AeroVironment Inc,industrials,M-ROIC,False,0.07848451727314444,median ROIC 7.8% vs 13%; min of last 10y -25.6% vs 0%
 AVAV,AeroVironment Inc,industrials,M-GROWTH,True,0.13764198635117575,revenue CAGR 13.8% (peak-to-peak) vs 3% min
@@ -2967,7 +2967,7 @@ AVGO,Broadcom Inc.,software,C5,False,0.25304514530194283,gross profit/assets 25.
 AVGO,Broadcom Inc.,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 AVGO,Broadcom Inc.,software,C7,True,0.41335037484591913,incremental ROIC on retained capital 41.3% vs 10% min
 AVGO,Broadcom Inc.,software,C8,True,0.7602576391648938,goodwill+intangibles 76.0% of assets; ROIC incl. goodwill 25.9%
-AVGO,Broadcom Inc.,software,C9,True,0.38696524064171123,2Q to 2026-05-03: revenue +38.7% YoY; operating income +60.1% YoY; margin 46.6% vs 40.4%
+AVGO,Broadcom Inc.,software,C9,True,0.5497253226369028,3Q to 2026-08-02: revenue +55.0% YoY; operating income +96.4% YoY; margin 49.7% vs 39.2%
 AVGO,Broadcom Inc.,software,C10,True,,no overlay entry
 AVGO,Broadcom Inc.,software,M-ROIC,False,0.13710220964037328,median ROIC 13.7% vs 20% (R&D capitalised); min of last 5y 13.6% vs 12%
 AVGO,Broadcom Inc.,software,M-GROWTH,True,0.19109710141606495,revenue CAGR 19.1% (10y) vs 8% min
@@ -3543,7 +3543,7 @@ BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C5,True,0.9398598408034322,gross profit/a
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C7,,,capital-allocation inputs unavailable
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C8,True,0.0,goodwill+intangibles 0.0% of assets
-BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C9,True,-0.047818652480585144,2Q to 2026-08-01: revenue -4.8% YoY
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,C10,True,,no overlay entry
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,M-ROIC,,,ROIC history insufficient
 BBW,BUILD-A-BEAR WORKSHOP INC,consumer,M-GROWTH,True,0.03442690989789421,revenue CAGR 3.4% (10y) vs 3% min
@@ -4119,7 +4119,7 @@ BKE,BUCKLE INC,consumer,C5,True,0.6491508180815684,gross profit/assets 64.9% vs 
 BKE,BUCKLE INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 BKE,BUCKLE INC,consumer,C7,False,0.030766623886737232,"capital returned, not retained; owner earnings/share CAGR 3.1% vs 5% min"
 BKE,BUCKLE INC,consumer,C8,True,0.0,goodwill+intangibles 0.0% of assets
-BKE,BUCKLE INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+BKE,BUCKLE INC,consumer,C9,True,0.05311512516915928,2Q to 2026-08-01: revenue +5.3% YoY; operating income +15.4% YoY; margin 18.9% vs 17.3%
 BKE,BUCKLE INC,consumer,C10,True,,no overlay entry
 BKE,BUCKLE INC,consumer,M-ROIC,True,1.3475308390670433,median ROIC 134.8% vs 15%; min of last 5y 132.0% vs 12%
 BKE,BUCKLE INC,consumer,M-GROWTH,False,0.014880805119630747,revenue CAGR 1.5% (10y) vs 3% min
@@ -5239,7 +5239,7 @@ CAL,CALERES INC,consumer,C5,True,0.6449607706330215,gross profit/assets 64.5% vs
 CAL,CALERES INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 CAL,CALERES INC,consumer,C7,False,-1.088533887987144,incremental ROIC on retained capital -108.9% vs 10% min
 CAL,CALERES INC,consumer,C8,True,0.10384985171356045,goodwill+intangibles 10.4% of assets
-CAL,CALERES INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+CAL,CALERES INC,consumer,C9,True,0.07017379826201742,2Q to 2026-08-01: revenue +7.0% YoY; operating income +386.1% YoY; margin 7.5% vs 1.6%
 CAL,CALERES INC,consumer,C10,True,,no overlay entry
 CAL,CALERES INC,consumer,M-ROIC,False,0.12792556963372892,median ROIC 12.8% vs 15%; min of last 5y 0.9% vs 12%
 CAL,CALERES INC,consumer,M-GROWTH,True,0.3930811238750236,revenue CAGR 39.3% (10y) vs 3% min
@@ -7111,7 +7111,7 @@ COF,CAPITAL ONE FINANCIAL CORP,financials,C5,True,,module gates apply instead
 COF,CAPITAL ONE FINANCIAL CORP,financials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 COF,CAPITAL ONE FINANCIAL CORP,financials,C7,,,capital-allocation inputs unavailable
 COF,CAPITAL ONE FINANCIAL CORP,financials,C8,True,0.06739371219221266,goodwill+intangibles 6.7% of assets
-COF,CAPITAL ONE FINANCIAL CORP,financials,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+COF,CAPITAL ONE FINANCIAL CORP,financials,C9,True,0.5517551755175518,2Q to 2026-06-30: revenue +55.2% YoY
 COF,CAPITAL ONE FINANCIAL CORP,financials,C10,True,,no overlay entry
 COF,CAPITAL ONE FINANCIAL CORP,financials,M-ROIC,False,0.08153733919549896,median ROE 8.2% vs 12% min
 COF,CAPITAL ONE FINANCIAL CORP,financials,M-GROWTH,True,,no revenue growth floor for this sector
@@ -8631,7 +8631,7 @@ DBI,Designer Brands Inc.,consumer,C5,True,0.5593580660660408,gross profit/assets
 DBI,Designer Brands Inc.,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 DBI,Designer Brands Inc.,consumer,C7,,,capital-allocation inputs unavailable
 DBI,Designer Brands Inc.,consumer,C8,True,0.10889063802061272,goodwill+intangibles 10.9% of assets
-DBI,Designer Brands Inc.,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+DBI,Designer Brands Inc.,consumer,C9,True,0.00021728905963613876,2Q to 2026-08-01: revenue +0.0% YoY; operating income +303.6% YoY; margin 5.2% vs 1.3%
 DBI,Designer Brands Inc.,consumer,C10,True,,no overlay entry
 DBI,Designer Brands Inc.,consumer,M-ROIC,False,0.0713873254465564,median ROIC 7.1% vs 15%; min of last 5y 3.8% vs 12%
 DBI,Designer Brands Inc.,consumer,M-GROWTH,False,0.009940211631568108,revenue CAGR 1.0% (10y) vs 3% min
@@ -9823,19 +9823,19 @@ EG,"EVEREST GROUP, LTD.",financials,M-SBC,True,,not applicable to this sector
 EG,"EVEREST GROUP, LTD.",financials,M-LOSS,False,2.0,2 loss-making year(s) in 18y of history (max 0)
 EG,"EVEREST GROUP, LTD.",financials,M-FEE-MARGIN,True,,not applicable to this sector
 EG,"EVEREST GROUP, LTD.",financials,M-FEE-BS,True,,not applicable to this sector
-EGAN,EGAIN Corp,software,C1,False,0.3415271854439468,FCF/NI 0.34 vs 0.80 min (after SBC)
-EGAN,EGAIN Corp,software,C2,True,0.8965452497183628,share count 0.897x vs 5y ago (max 1.02)
-EGAN,EGAIN Corp,software,C3,False,,"6/10 profitable years, 10/10 FCF-positive"
+EGAN,EGAIN Corp,software,C1,False,0.45096545761455803,FCF/NI 0.45 vs 0.80 min (after SBC)
+EGAN,EGAIN Corp,software,C2,True,0.8547105561861521,share count 0.855x vs 5y ago (max 1.02)
+EGAN,EGAIN Corp,software,C3,False,,"7/10 profitable years, 10/10 FCF-positive"
 EGAN,EGAIN Corp,software,C4,False,,EBITDA not positive at test point
-EGAN,EGAIN Corp,software,C5,True,0.5100506836029158,gross profit/assets 51.0% vs 40% floor
+EGAN,EGAIN Corp,software,C5,True,0.4517044494746444,gross profit/assets 45.2% vs 40% floor
 EGAN,EGAIN Corp,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
-EGAN,EGAIN Corp,software,C7,True,1.7497548259828097,incremental ROIC on retained capital 175.0% vs 10% min
-EGAN,EGAIN Corp,software,C8,True,0.08909158474375865,goodwill+intangibles 8.9% of assets
+EGAN,EGAIN Corp,software,C7,True,1.66713535408209,incremental ROIC on retained capital 166.7% vs 10% min
+EGAN,EGAIN Corp,software,C8,True,0.0890976046488057,goodwill+intangibles 8.9% of assets
 EGAN,EGAIN Corp,software,C9,True,0.058116170989462645,3Q to 2026-03-31: revenue +5.8% YoY; operating income +480.7% YoY; margin 10.0% vs 1.8%
 EGAN,EGAIN Corp,software,C10,True,,no overlay entry
 EGAN,EGAIN Corp,software,M-ROIC,False,0.11508489243356948,median ROIC 11.5% vs 20% (R&D capitalised); min of last 5y 8.1% vs 12%
-EGAN,EGAIN Corp,software,M-GROWTH,False,0.01538054551422352,revenue CAGR 1.5% (10y) vs 8% min
-EGAN,EGAIN Corp,software,M-SBC,True,0.04880230164973115,SBC/revenue 4.9% vs 10% max
+EGAN,EGAIN Corp,software,M-GROWTH,False,0.02765821125782275,revenue CAGR 2.8% (10y) vs 8% min
+EGAN,EGAIN Corp,software,M-SBC,True,0.030745259831460675,SBC/revenue 3.1% vs 10% max
 EGAN,EGAIN Corp,software,M-LOSS,True,,not applicable to this sector
 EGAN,EGAIN Corp,software,M-FEE-MARGIN,True,,not applicable to this sector
 EGAN,EGAIN Corp,software,M-FEE-BS,True,,not applicable to this sector
@@ -11495,7 +11495,7 @@ FIZZ,NATIONAL BEVERAGE CORP,consumer,C5,True,0.5563193287567535,gross profit/ass
 FIZZ,NATIONAL BEVERAGE CORP,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 FIZZ,NATIONAL BEVERAGE CORP,consumer,C7,True,0.18559768498127335,incremental ROIC on retained capital 18.6% vs 10% min
 FIZZ,NATIONAL BEVERAGE CORP,consumer,C8,True,0.017331124280364988,goodwill+intangibles 1.7% of assets
-FIZZ,NATIONAL BEVERAGE CORP,consumer,C9,True,-0.004835957081303355,3Q to 2026-01-31: revenue -0.5% YoY; operating income +1.1% YoY; margin 20.4% vs 20.0%
+FIZZ,NATIONAL BEVERAGE CORP,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
 FIZZ,NATIONAL BEVERAGE CORP,consumer,C10,True,,no overlay entry
 FIZZ,NATIONAL BEVERAGE CORP,consumer,M-ROIC,True,0.7227501749426805,median ROIC 72.3% vs 15%; min of last 5y 61.4% vs 12%
 FIZZ,NATIONAL BEVERAGE CORP,consumer,M-GROWTH,True,0.05293811505068513,revenue CAGR 5.3% (10y) vs 3% min
@@ -12663,7 +12663,7 @@ GCO,GENESCO INC,consumer,C5,True,0.8212530399779564,gross profit/assets 82.1% vs
 GCO,GENESCO INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 GCO,GENESCO INC,consumer,C7,False,-0.11232719045290751,"capital returned, not retained; owner earnings/share CAGR -11.2% vs 5% min"
 GCO,GENESCO INC,consumer,C8,True,0.02679582879270168,goodwill+intangibles 2.7% of assets
-GCO,GENESCO INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+GCO,GENESCO INC,consumer,C9,True,-0.0029952801052612887,2Q to 2026-08-01: revenue -0.3% YoY; margin -1.2% vs -4.2%
 GCO,GENESCO INC,consumer,C10,True,,no overlay entry
 GCO,GENESCO INC,consumer,M-ROIC,False,0.05895874479006387,median ROIC 5.9% vs 15%; min of last 5y -1.9% vs 12%
 GCO,GENESCO INC,consumer,M-GROWTH,False,-0.02132919903734598,revenue CAGR -2.1% (10y) vs 3% min
@@ -13279,18 +13279,18 @@ GNW,GENWORTH FINANCIAL INC,financials,M-SBC,True,,not applicable to this sector
 GNW,GENWORTH FINANCIAL INC,financials,M-LOSS,False,5.0,5 loss-making year(s) in 19y of history (max 0)
 GNW,GENWORTH FINANCIAL INC,financials,M-FEE-MARGIN,True,,not applicable to this sector
 GNW,GENWORTH FINANCIAL INC,financials,M-FEE-BS,True,,not applicable to this sector
-GOLD,"Gold.com, Inc.",industrials,C1,False,0.0251291637896029,FCF/NI 0.03 vs 0.80 min
-GOLD,"Gold.com, Inc.",industrials,C2,False,3.451945484075983,share count 3.452x vs 5y ago (max 1.02)
+GOLD,"Gold.com, Inc.",industrials,C1,True,2.7964638166890174,FCF/NI 2.80 vs 0.80 min
+GOLD,"Gold.com, Inc.",industrials,C2,False,1.5192648484780937,share count 1.519x vs 5y ago (max 1.02)
 GOLD,"Gold.com, Inc.",industrials,C3,False,,"10/10 profitable years, 4/10 FCF-positive"
 GOLD,"Gold.com, Inc.",industrials,C4,,,EBITDA unavailable
-GOLD,"Gold.com, Inc.",industrials,C5,False,0.09520314557302845,gross profit/assets 9.5% vs 20% floor
+GOLD,"Gold.com, Inc.",industrials,C5,False,-4.780468450608482,gross profit/assets -478.0% vs 20% floor
 GOLD,"Gold.com, Inc.",industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 GOLD,"Gold.com, Inc.",industrials,C7,,,capital-allocation inputs unavailable
-GOLD,"Gold.com, Inc.",industrials,C8,True,0.16518862469650375,goodwill+intangibles 16.5% of assets
+GOLD,"Gold.com, Inc.",industrials,C8,True,0.0959943861603285,goodwill+intangibles 9.6% of assets
 GOLD,"Gold.com, Inc.",industrials,C9,False,-0.2703070104914175,3Q to 2026-03-31: revenue -27.0% YoY [cyclical bar] — revenue break
 GOLD,"Gold.com, Inc.",industrials,C10,True,,no overlay entry
 GOLD,"Gold.com, Inc.",industrials,M-ROIC,,,ROIC history insufficient
-GOLD,"Gold.com, Inc.",industrials,M-GROWTH,False,0.026822030959894327,revenue CAGR 2.7% (peak-to-peak) vs 3% min
+GOLD,"Gold.com, Inc.",industrials,M-GROWTH,False,-0.16551242104527608,revenue CAGR -16.6% (peak-to-peak) vs 3% min
 GOLD,"Gold.com, Inc.",industrials,M-SBC,True,,not applicable to this sector
 GOLD,"Gold.com, Inc.",industrials,M-LOSS,True,,not applicable to this sector
 GOLD,"Gold.com, Inc.",industrials,M-FEE-MARGIN,True,,not applicable to this sector
@@ -18727,7 +18727,7 @@ M,"Macy's, Inc.",consumer,C5,True,0.521460797463724,gross profit/assets 52.1% vs
 M,"Macy's, Inc.",consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 M,"Macy's, Inc.",consumer,C7,False,0.0032447882689867757,"capital returned, not retained; owner earnings/share CAGR 0.3% vs 5% min"
 M,"Macy's, Inc.",consumer,C8,True,0.07685675575809829,goodwill+intangibles 7.7% of assets
-M,"Macy's, Inc.",consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+M,"Macy's, Inc.",consumer,C9,True,0.014557432791414193,2Q to 2026-08-01: revenue +1.5% YoY; operating income +46.5% YoY; margin 3.7% vs 2.6%
 M,"Macy's, Inc.",consumer,C10,True,,no overlay entry
 M,"Macy's, Inc.",consumer,M-ROIC,False,0.14226876195866872,median ROIC 14.2% vs 15%; min of last 5y 4.0% vs 12%
 M,"Macy's, Inc.",consumer,M-GROWTH,False,-0.021613144228947667,revenue CAGR -2.2% (10y) vs 3% min
@@ -19055,18 +19055,18 @@ MCD,MCDONALDS CORP,consumer,M-SBC,True,,not applicable to this sector
 MCD,MCDONALDS CORP,consumer,M-LOSS,True,,not applicable to this sector
 MCD,MCDONALDS CORP,consumer,M-FEE-MARGIN,True,,not applicable to this sector
 MCD,MCDONALDS CORP,consumer,M-FEE-BS,True,,not applicable to this sector
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C1,True,1.222896186996629,FCF/NI 1.22 vs 0.80 min
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C2,True,0.8821046133007574,share count 0.882x vs 5y ago (max 1.02)
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C3,False,,"9/10 profitable years, 10/10 FCF-positive"
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C1,True,1.5776586950944902,FCF/NI 1.58 vs 0.80 min
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C2,True,0.9056186044381346,share count 0.906x vs 5y ago (max 1.02)
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C3,False,,"8/10 profitable years, 10/10 FCF-positive"
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C4,False,,EBITDA not positive at test point
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C5,True,0.2252000100633994,gross profit/assets 22.5% vs 20% floor
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C5,True,0.21875528951944234,gross profit/assets 21.9% vs 20% floor
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C7,False,-0.14584508578881444,incremental ROIC on retained capital -14.6% vs 10% min
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C8,True,0.23213488851616476,goodwill+intangibles 23.2% of assets
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C7,False,-0.04435519937013459,incremental ROIC on retained capital -4.4% vs 10% min
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C8,False,0.43224254244332894,goodwill+intangibles 43.2% of assets; ROIC incl. goodwill -0.3%
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C9,True,0.15242176791953832,4Q to 2026-03-29: revenue +15.2% YoY; operating income +136.1% YoY; margin 3.7% vs 1.8% [cyclical bar]
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,C10,True,,no overlay entry
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-ROIC,False,0.31510821822832213,median ROIC 31.5% vs 13%; min of last 10y -14.9% vs 0%
-MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-GROWTH,True,0.11218371748494049,revenue CAGR 11.2% (peak-to-peak) vs 3% min
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-ROIC,False,0.25015811466917004,median ROIC 25.0% vs 13%; min of last 10y -14.9% vs 0%
+MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-GROWTH,False,-0.04061077545907765,revenue CAGR -4.1% (peak-to-peak) vs 3% min
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-SBC,True,,not applicable to this sector
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-LOSS,True,,not applicable to this sector
 MCFT,"MasterCraft Boat Holdings, Inc.",industrials,M-FEE-MARGIN,True,,not applicable to this sector
@@ -23391,19 +23391,19 @@ PANL,Pangaea Logistics Solutions Ltd.,industrials,M-SBC,True,,not applicable to 
 PANL,Pangaea Logistics Solutions Ltd.,industrials,M-LOSS,True,,not applicable to this sector
 PANL,Pangaea Logistics Solutions Ltd.,industrials,M-FEE-MARGIN,True,,not applicable to this sector
 PANL,Pangaea Logistics Solutions Ltd.,industrials,M-FEE-BS,True,,not applicable to this sector
-PANW,Palo Alto Networks Inc,software,C1,True,2.0766549493397926,FCF/NI 2.08 vs 0.80 min (after SBC)
-PANW,Palo Alto Networks Inc,software,C2,False,7.319917440660475,share count 7.320x vs 5y ago (max 1.02)
-PANW,Palo Alto Networks Inc,software,C3,False,,"3/10 profitable years, 10/10 FCF-positive"
-PANW,Palo Alto Networks Inc,software,C4,True,-1.830170837798651,"net debt/EBITDA -1.83x (latest, max 2.0x), interest cover 414.3x (min 12.0)"
-PANW,Palo Alto Networks Inc,software,C5,False,0.29855084063248777,gross profit/assets 29.9% vs 40% floor
+PANW,Palo Alto Networks Inc,software,C1,True,2.1173986687978625,FCF/NI 2.12 vs 0.80 min (after SBC)
+PANW,Palo Alto Networks Inc,software,C2,False,2.642684192320996,share count 2.643x vs 5y ago (max 1.02)
+PANW,Palo Alto Networks Inc,software,C3,False,,"4/10 profitable years, 10/10 FCF-positive"
+PANW,Palo Alto Networks Inc,software,C4,True,-1.981290322580645,net cash (-1.98x latest); no interest expense to cover
+PANW,Palo Alto Networks Inc,software,C5,False,0.2871564302680692,gross profit/assets 28.7% vs 40% floor
 PANW,Palo Alto Networks Inc,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
-PANW,Palo Alto Networks Inc,software,C7,True,0.2225921557696258,incremental ROIC on retained capital 22.3% vs 10% min
-PANW,Palo Alto Networks Inc,software,C8,True,0.22604575801019672,goodwill+intangibles 22.6% of assets
+PANW,Palo Alto Networks Inc,software,C7,False,0.021983562069954766,incremental ROIC on retained capital 2.2% vs 10% min
+PANW,Palo Alto Networks Inc,software,C8,False,0.5989888567891044,goodwill+intangibles 59.9% of assets; ROIC incl. goodwill 3.5%
 PANW,Palo Alto Networks Inc,software,C9,False,0.7010723860589813,3Q to 2026-04-30: revenue +20.7% YoY; operating income -29.9% YoY; margin 6.5% vs 11.2% — earnings break
 PANW,Palo Alto Networks Inc,software,C10,True,,no overlay entry
-PANW,Palo Alto Networks Inc,software,M-ROIC,False,0.09398308600667374,median ROIC 9.4% vs 20% (R&D capitalised); min of last 5y 8.0% vs 12%
-PANW,Palo Alto Networks Inc,software,M-GROWTH,True,0.2581159834784892,revenue CAGR 25.8% (10y) vs 8% min
-PANW,Palo Alto Networks Inc,software,M-SBC,False,0.1404435287100797,SBC/revenue 14.0% vs 10% max
+PANW,Palo Alto Networks Inc,software,M-ROIC,False,0.09398308600667374,median ROIC 9.4% vs 20% (R&D capitalised); min of last 5y 3.5% vs 12%
+PANW,Palo Alto Networks Inc,software,M-GROWTH,True,0.23609973056648448,revenue CAGR 23.6% (10y) vs 8% min
+PANW,Palo Alto Networks Inc,software,M-SBC,False,0.14044029931677693,SBC/revenue 14.0% vs 10% max
 PANW,Palo Alto Networks Inc,software,M-LOSS,True,,not applicable to this sector
 PANW,Palo Alto Networks Inc,software,M-FEE-MARGIN,True,,not applicable to this sector
 PANW,Palo Alto Networks Inc,software,M-FEE-BS,True,,not applicable to this sector
@@ -24247,7 +24247,7 @@ PLAB,PHOTRONICS INC,software,C5,False,0.18454153741197002,gross profit/assets 18
 PLAB,PHOTRONICS INC,software,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 PLAB,PHOTRONICS INC,software,C7,True,0.828471514513022,incremental ROIC on retained capital 82.8% vs 10% min
 PLAB,PHOTRONICS INC,software,C8,True,0.0,goodwill+intangibles 0.0% of assets
-PLAB,PHOTRONICS INC,software,C9,True,0.028067024318767286,2Q to 2026-05-03: revenue +2.8% YoY; operating income -10.1% YoY; margin 22.3% vs 25.5%
+PLAB,PHOTRONICS INC,software,C9,True,0.027669038584173578,3Q to 2026-08-02: revenue +2.8% YoY; operating income -8.7% YoY; margin 21.9% vs 24.6%
 PLAB,PHOTRONICS INC,software,C10,True,,no overlay entry
 PLAB,PHOTRONICS INC,software,M-ROIC,False,0.10588660291798564,median ROIC 10.6% vs 20% (R&D capitalised); min of last 5y 10.6% vs 12%
 PLAB,PHOTRONICS INC,software,M-GROWTH,False,0.04943515093199635,revenue CAGR 4.9% (10y) vs 8% min
@@ -26007,7 +26007,7 @@ RH,RH,consumer,C5,True,0.3134507652444005,gross profit/assets 31.3% vs 30% floor
 RH,RH,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 RH,RH,consumer,C7,True,0.11328345478668522,"capital returned, not retained; owner earnings/share CAGR 11.3% vs 5% min"
 RH,RH,consumer,C8,True,0.029827884633280326,goodwill+intangibles 3.0% of assets
-RH,RH,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+RH,RH,consumer,C9,False,0.7674565851493882,2Q to 2026-08-01: revenue +0.5% YoY; operating income -23.3% YoY; margin 8.2% vs 10.8% — earnings break
 RH,RH,consumer,C10,True,,no overlay entry
 RH,RH,consumer,M-ROIC,False,1.5557566840423742,median ROIC 155.6% vs 15%; min of last 5y 4.8% vs 12%
 RH,RH,consumer,M-GROWTH,True,0.05012791778636361,revenue CAGR 5.0% (10y) vs 3% min
@@ -27575,7 +27575,7 @@ SHOE,SHOE STATION GROUP INC,consumer,C5,True,0.3814441885435264,gross profit/ass
 SHOE,SHOE STATION GROUP INC,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 SHOE,SHOE STATION GROUP INC,consumer,C7,False,0.07198212942548313,incremental ROIC on retained capital 7.2% vs 10% min
 SHOE,SHOE STATION GROUP INC,consumer,C8,True,0.04904626030690422,goodwill+intangibles 4.9% of assets
-SHOE,SHOE STATION GROUP INC,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+SHOE,SHOE STATION GROUP INC,consumer,C9,False,0.04242733847767053,2Q to 2026-08-01: revenue -5.0% YoY; operating income -95.8% YoY; margin 0.3% vs 6.4% — earnings break
 SHOE,SHOE STATION GROUP INC,consumer,C10,True,,no overlay entry
 SHOE,SHOE STATION GROUP INC,consumer,M-ROIC,False,0.14112516199510927,median ROIC 14.1% vs 15%; min of last 5y 8.9% vs 12%
 SHOE,SHOE STATION GROUP INC,consumer,M-GROWTH,False,0.014410846887810358,revenue CAGR 1.4% (10y) vs 3% min
@@ -34359,7 +34359,7 @@ ZUMZ,Zumiez Inc,consumer,C5,True,0.47731779656345047,gross profit/assets 47.7% v
 ZUMZ,Zumiez Inc,consumer,C6,True,,"MANUAL: check restatements, auditor change, 8-K Item 4.02"
 ZUMZ,Zumiez Inc,consumer,C7,False,0.0270824977502111,"capital returned, not retained; owner earnings/share CAGR 2.7% vs 5% min"
 ZUMZ,Zumiez Inc,consumer,C8,True,0.04817354398133415,goodwill+intangibles 4.8% of assets
-ZUMZ,Zumiez Inc,consumer,C9,True,,NOT VERIFIED — no comparable quarterly filings; this company is still being judged on annual data alone
+ZUMZ,Zumiez Inc,consumer,C9,True,0.009267017545620204,2Q to 2026-08-01: revenue +0.9% YoY; margin -4.1% vs -5.0%
 ZUMZ,Zumiez Inc,consumer,C10,True,,no overlay entry
 ZUMZ,Zumiez Inc,consumer,M-ROIC,False,0.08529734551431352,median ROIC 8.5% vs 15%; min of last 5y -19.4% vs 12%
 ZUMZ,Zumiez Inc,consumer,M-GROWTH,False,0.014539001697854603,revenue CAGR 1.5% (10y) vs 3% min
