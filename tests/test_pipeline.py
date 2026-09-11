@@ -224,7 +224,7 @@ def main():
         os.chdir(work)
         for f in ["config.py", "secdata.py", "metrics.py", "gates.py",
                   "universe.py", "run_screen.py", "screener_import.py",
-                  "rank.py", "moat.py", "overlay.py"]:
+                  "rank.py", "moat.py", "overlay.py", "track.py"]:
             shutil.copy(ROOT / f, work / f)
         os.environ["SEC_USER_AGENT"] = "Test User test@example.com"
         n = U.build(work / "out", work / "data" / "companyfacts.zip",
@@ -406,6 +406,79 @@ def main():
     y = R.owner_earnings_yield(good, 1_000.0)
     failures += not check("owner-earnings yield is computable from a market cap",
                           y is not None and y > 0, f"{y:.1%}" if y else "None")
+
+    print("\n=== the tracking record is append-only ===")
+    import track as TR
+    tpath = Path("/tmp/pipeline_fixture/track_test.csv")
+    tpath.unlink(missing_ok=True)
+    r1 = [{"ticker": "AAA", "name": "A", "module": "consumer", "score": "80",
+           "durability": "85", "moat": "wide", "price": "10", "buy_price": "12",
+           "owner_earnings_yield": "0.09", "hurdle": "0.06", "clears_hurdle": "yes"},
+          {"ticker": "BBB", "name": "B", "module": "consumer", "score": "70",
+           "durability": "60", "moat": "narrow", "price": "20", "buy_price": "9",
+           "owner_earnings_yield": "0.03", "hurdle": "0.08", "clears_hurdle": "no"}]
+    s1 = TR.update(tpath, r1, "2026-09-11")
+    failures += not check("first run records both names", s1["appended"] == 2, str(s1))
+
+    s2 = TR.update(tpath, r1, "2026-12-01")
+    failures += not check("an unchanged run appends nothing", s2["appended"] == 0, str(s2))
+
+    r2 = [dict(r1[0], clears_hurdle="no"), r1[1]]
+    s3 = TR.update(tpath, r2, "2027-03-01")
+    failures += not check("a name that stops clearing is recorded",
+                          s3["appended"] == 1, str(s3))
+
+    s4 = TR.update(tpath, [r1[1]], "2027-06-01")
+    failures += not check("a name leaving the list is recorded too",
+                          s4["appended"] == 1, str(s4))
+
+    hist = TR.load(tpath)
+    failures += not check("history is never rewritten — 4 rows, oldest intact",
+                          len(hist) == 4 and hist[0]["run_date"] == "2026-09-11"
+                          and hist[0]["status"] == "cleared", str(len(hist)))
+    failures += not check("first_seen survives a status change",
+                          [h for h in hist if h["ticker"] == "AAA"][-1]["first_seen"]
+                          == "2026-09-11")
+
+    print("\n=== M2: cyclicals valued at mid-cycle, not at the peak ===")
+    # A company whose last three years are far above its ten-year norm. §M2 has
+    # required this since v0.1 and nothing implemented it, which is how Toll
+    # Brothers reached run 10 as the only name below its buy price on a yield
+    # drawn from an exceptional housing market.
+    # A cycle is MARGINS peaking, not revenue growing. A constant-margin grower
+    # has no cycle to normalise — its latest year is its best estimate. Here
+    # margins compound upward, so the last three years sit well above the
+    # ten-year norm, which is what a homebuilder at the top of a cycle looks like.
+    boom = secdata.extract(make_companyfacts(70, "Boom Co", growth=1.04,
+                                             margin_decay=1.12))
+    mid = MM.mid_cycle_owner_earnings(boom)
+    med3 = statistics_median_owner_earnings(boom)
+    failures += not check("mid-cycle earnings sit below a three-year median in a boom",
+                          mid is not None and mid < med3, f"{mid:,.0f} vs {med3:,.0f}")
+
+    cyc = R.normalised_owner_earnings(boom, None, "industrials")
+    non = R.normalised_owner_earnings(boom, None, "consumer")
+    failures += not check("a cyclical is valued on the lower of the two",
+                          cyc[0] < non[0], f"{cyc[0]:,.0f} vs {non[0]:,.0f}")
+    failures += not check("a non-cyclical is untouched by the normalisation",
+                          abs(non[0] - med3) < 1e-6)
+    iv_cyc = R.dcf_intrinsic_value(boom, None, "industrials")
+    iv_non = R.dcf_intrinsic_value(boom, None, "consumer")
+    failures += not check("the DCF applies the same discipline, not just the yield",
+                          iv_cyc < iv_non, f"{iv_cyc:,.0f} vs {iv_non:,.0f}")
+    y_cyc = R.owner_earnings_yield(boom, 5_000.0, None, "industrials")
+    y_non = R.owner_earnings_yield(boom, 5_000.0, None, "consumer")
+    failures += not check("so a boom cannot be mistaken for a run-rate yield",
+                          y_cyc < y_non, f"{y_cyc:.1%} vs {y_non:.1%}")
+
+    # And it must not punish a business whose margins are simply stable.
+    flat = secdata.extract(make_companyfacts(71, "Steady Cyclical", growth=1.04,
+                                             margin_decay=1.0))
+    f_cyc = R.normalised_owner_earnings(flat, None, "industrials")
+    f_non = R.normalised_owner_earnings(flat, None, "consumer")
+    failures += not check("a steady business is barely affected by mid-cycling",
+                          abs(f_cyc[0] - f_non[0]) / f_non[0] < 0.12,
+                          f"{f_cyc[0]:,.0f} vs {f_non[0]:,.0f}")
 
     print("\n=== C10: dated facts from outside the filings ===")
     import overlay as OV

@@ -178,8 +178,8 @@ def rank() -> None:
             credit, source = MO.grants_quality_credit(dur, dur_avail), "computed"
 
         guided = OV.earnings_factor(ov_row)
-        oey = R.owner_earnings_yield(s, mcap, guided) if mcap else None
-        iv = R.dcf_intrinsic_value(s, guided)
+        oey = R.owner_earnings_yield(s, mcap, guided, module) if mcap else None
+        iv = R.dcf_intrinsic_value(s, guided, module)
         mvh = R.multiple_vs_history(s, mcap, closes.get(t_)) if mcap else None
         bp = R.buy_price(iv, shares, moat, mos) if (iv and shares) else None
         price = (mcap / shares) if (mcap and shares) else None
@@ -263,6 +263,13 @@ def rank() -> None:
         with open(OUT / "moat.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(moat_rows[0]))
             w.writeheader(); w.writerows(moat_rows)
+
+    # The tracking record: append-only, written on the day, never edited.
+    import track as TR
+    stats = TR.update(OUT / "track.csv", rows)
+    print(f"\n  tracking record: {stats['appended']} change(s) appended, "
+          f"{stats['total']} row(s) total across {stats['tracked_names']} names "
+          f"-> {OUT/'track.csv'}")
 
     buyable = [r for r in rows if r["clears_hurdle"] == "yes"]
     print(f"\nranked {len(rows)} survivors -> {OUT/'ranked.csv'}")

@@ -110,6 +110,10 @@ C9_MIN_OPERATING_INCOME_RATIO = 0.875   # >12.5% down is a break
 # does the work — the valuation is cut to current earning power — and only a
 # severe fall excludes.
 C9_CYCLICAL_MODULES = {"industrials", "energy"}
+# The same set drives §M2's mid-cycle valuation: for these modules the
+# valuation base is the LOWER of the three-year median (after any haircut) and
+# mid-cycle owner earnings, so a boom cannot be mistaken for a run-rate.
+CYCLICAL_MODULES = C9_CYCLICAL_MODULES
 C9_MIN_OPERATING_INCOME_RATIO_CYCLICAL = 0.70
 C9_ENABLED = True
 # What to do when a company has no parseable quarterly filings.

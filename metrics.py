@@ -344,6 +344,43 @@ def current_earnings_factor(s: AnnualSeries) -> float | None:
     return min(1.0, max(0.0, r))
 
 
+def mid_cycle_owner_earnings(s: AnnualSeries, years: int = 10) -> float | None:
+    """
+    §M2: what this business earns in an average year, at today's scale.
+
+    A cyclical valued on a three-year median that happens to span a boom is
+    being valued on the top of its cycle. Toll Brothers is the live case — the
+    only name in run 10 trading below its buy price, on a 10.1% owner-earnings
+    yield computed across an exceptional US housing market. The criteria
+    document has required mid-cycle normalisation for cyclicals since v0.1 and
+    nothing in the code did it.
+
+    Method: take the owner-earnings MARGIN in each of the last ten years, take
+    the median of those margins, and apply it to the latest year's revenue.
+    That strips cycle-peak profitability while keeping the company's current
+    size — which is the right combination, because a homebuilder that has grown
+    should not be valued on the earnings of a smaller version of itself.
+
+    Deliberately NOT an average of past owner earnings: that would value today's
+    business at the scale it had five years ago.
+    """
+    ys = common_years(s, ["net_income", "depreciation_amortisation",
+                          "capex", "revenue"], years)
+    if len(ys) < 5:
+        return None
+    margins = []
+    for y in ys:
+        oe, rev = owner_earnings(s, y), _get(s, "revenue", y)
+        if oe is not None and rev and rev > 0:
+            margins.append(oe / rev)
+    if len(margins) < 5:
+        return None
+    latest_rev = _get(s, "revenue", ys[-1])
+    if not latest_rev or latest_rev <= 0:
+        return None
+    return statistics.median(margins) * latest_rev
+
+
 # ------------------------------------------------- capital allocation --
 def capital_allocation(s: AnnualSeries, years: int = 10) -> tuple[str, float] | None:
     """

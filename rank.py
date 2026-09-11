@@ -199,7 +199,8 @@ def is_price_comparable(components: list[tuple]) -> bool:
 
 # ------------------------------------------------------------ valuation --
 def normalised_owner_earnings(s: secdata.AnnualSeries,
-                              guided_factor: float | None = None) -> tuple[float, float] | None:
+                              guided_factor: float | None = None,
+                              sector: str = "") -> tuple[float, float] | None:
     """
     (owner earnings used for valuation, haircut factor applied).
 
@@ -207,6 +208,13 @@ def normalised_owner_earnings(s: secdata.AnnualSeries,
     filed quarters show the business earning less than a year ago. Without the
     haircut the median carries the good years while the price reflects the bad
     one, and the screen calls a broken business cheap.
+
+    For CYCLICALS the three-year median is not a run-rate at all — it is
+    whatever part of the cycle those three years happened to cover. §M2 has
+    required mid-cycle normalisation since v0.1 and nothing implemented it, so
+    Toll Brothers reached run 10 as the only name below its buy price on a
+    10.1% yield drawn from an exceptional housing market. For these sectors the
+    base is the LOWER of the haircut median and mid-cycle owner earnings.
     """
     ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
     if not ys:
@@ -221,16 +229,23 @@ def normalised_owner_earnings(s: secdata.AnnualSeries,
     # earning and what its own management says it will earn.
     if guided_factor is not None:
         factor = min(factor, guided_factor)
-    return statistics.median(oes) * factor, factor
+    base = statistics.median(oes) * factor
+
+    if sector in config.CYCLICAL_MODULES:
+        mid = M.mid_cycle_owner_earnings(s)
+        if mid is not None and mid > 0:
+            base = min(base, mid)
+    return base, factor
 
 
 def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float,
-                         guided_factor: float | None = None) -> float | None:
+                         guided_factor: float | None = None,
+                         sector: str = "") -> float | None:
     """Lens A: current-adjusted owner earnings over enterprise value."""
     ys = M.common_years(s, ["net_income", "depreciation_amortisation", "capex"], 3)
     if not ys or not market_cap:
         return None
-    got = normalised_owner_earnings(s, guided_factor)
+    got = normalised_owner_earnings(s, guided_factor, sector)
     if not got:
         return None
     oe, _ = got
@@ -239,7 +254,8 @@ def owner_earnings_yield(s: secdata.AnnualSeries, market_cap: float,
 
 
 def dcf_intrinsic_value(s: secdata.AnnualSeries,
-                        guided_factor: float | None = None) -> float | None:
+                        guided_factor: float | None = None,
+                        sector: str = "") -> float | None:
     """
     Lens B: two-stage DCF on owner earnings, with growth FADING to terminal.
 
@@ -271,6 +287,13 @@ def dcf_intrinsic_value(s: secdata.AnnualSeries,
     if guided_factor is not None:
         factor = min(factor, guided_factor)
     base *= factor
+
+    # Same mid-cycle discipline as Lens A. Discounting ten years of cash flow
+    # off a cycle peak is the most expensive single mistake available here.
+    if sector in config.CYCLICAL_MODULES:
+        mid = M.mid_cycle_owner_earnings(s)
+        if mid is not None and mid > 0:
+            base = min(base, mid)
     first, last = min(oes), max(oes)
     hist = M.cagr(oes[first], oes[last], last - first) or 0.0
     g = max(0.0, min(hist, 0.10))
