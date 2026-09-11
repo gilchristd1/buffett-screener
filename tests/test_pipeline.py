@@ -540,6 +540,36 @@ def main():
                           f"{d_boom['latest_margin']:.1%} vs {d_boom['median_margin']:.1%}")
     failures += not check("and the reported mid-cycle matches the value used",
                           abs(d_boom["mid_cycle"] - mid) < 1e-6)
+    failures += not check("the window matches §1's 15-year cyclical requirement",
+                          config.MID_CYCLE_LOOKBACK_YEARS == 15,
+                          f"{config.MID_CYCLE_LOOKBACK_YEARS}")
+    # Span, not count, is the test. Run 12 found Toll Brothers' cap computed
+    # over nine years spanning 2017-2025 — an unbroken housing expansion whose
+    # median is itself a boom — and the cap therefore sat above the base and
+    # did nothing. The fixture runs 2015-2025, so it passes; a short one must
+    # not.
+    # span_ok must follow the configured bar, not a literal. Worth noting what
+    # this fixture shows: eleven years of clean, complete data is still
+    # reported as too short to contain a cycle. That is the intended severity —
+    # the bar is about whether a downturn is in view, not about data quality.
+    failures += not check("span adequacy follows the configured minimum",
+                          d_boom["span_ok"] == (d_boom["span"] >= config.MID_CYCLE_MIN_SPAN),
+                          f"span {d_boom['span']} vs min {config.MID_CYCLE_MIN_SPAN}")
+    short = secdata.extract(make_companyfacts(72, "Short History Co",
+                                              growth=1.04, margin_decay=1.12))
+    for f in ("net_income", "depreciation_amortisation", "capex", "revenue"):
+        ser = short.series(f)
+        for y in list(ser):
+            if y < 2021:
+                del ser[y]
+    d_short = MM.mid_cycle_detail(short)
+    failures += not check("a five-year history is reported as too short to be a cycle",
+                          d_short["span_ok"] is False, f"span {d_short['span']}")
+    failures += not check("...and it does not block yet, by configuration",
+                          config.MID_CYCLE_SHORT_SPAN_BLOCKS is False)
+    failures += not check("a short span still returns a base while blocking is off",
+                          R.normalised_owner_earnings(short, None, "industrials") is not None)
+
     d_flat = MM.mid_cycle_detail(flat)
     failures += not check("a steady business shows a latest margin near its median",
                           abs(d_flat["latest_margin"] - d_flat["median_margin"])

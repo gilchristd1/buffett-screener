@@ -397,7 +397,7 @@ def current_earnings_factor(s: AnnualSeries) -> float | None:
     return min(1.0, max(0.0, r))
 
 
-def mid_cycle_owner_earnings(s: AnnualSeries, years: int = 10) -> float | None:
+def mid_cycle_owner_earnings(s: AnnualSeries, years: int | None = None) -> float | None:
     """
     §M2: what this business earns in an average year, at today's scale.
 
@@ -417,6 +417,7 @@ def mid_cycle_owner_earnings(s: AnnualSeries, years: int = 10) -> float | None:
     Deliberately NOT an average of past owner earnings: that would value today's
     business at the scale it had five years ago.
     """
+    years = years or config.MID_CYCLE_LOOKBACK_YEARS
     ys = common_years(s, ["net_income", "depreciation_amortisation",
                           "capex", "revenue"], years)
     if len(ys) < 5:
@@ -434,7 +435,7 @@ def mid_cycle_owner_earnings(s: AnnualSeries, years: int = 10) -> float | None:
     return statistics.median(margins) * latest_rev
 
 
-def mid_cycle_detail(s: AnnualSeries, years: int = 10) -> dict:
+def mid_cycle_detail(s: AnnualSeries, years: int | None = None) -> dict:
     """
     The same calculation with its workings exposed. Writes nothing, decides
     nothing, changes no gate.
@@ -452,6 +453,7 @@ def mid_cycle_detail(s: AnnualSeries, years: int = 10) -> dict:
     cycle; five drawn from 2021–2025 is one leg of a housing boom, and the
     median of a boom is a boom.
     """
+    years = years or config.MID_CYCLE_LOOKBACK_YEARS
     ys = common_years(s, ["net_income", "depreciation_amortisation",
                           "capex", "revenue"], years)
     margins, margin_years = [], []
@@ -470,6 +472,8 @@ def mid_cycle_detail(s: AnnualSeries, years: int = 10) -> dict:
         "latest_margin": margins[-1] if margins else None,
         "latest_revenue": latest_rev,
         "mid_cycle": mid_cycle_owner_earnings(s, years),
+        "span_ok": bool(margin_years) and
+                   (margin_years[-1] - margin_years[0] + 1) >= config.MID_CYCLE_MIN_SPAN,
     }
 
 

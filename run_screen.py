@@ -227,6 +227,7 @@ def rank() -> None:
                 "mid_cycle_oe": f"{d['mid_cycle']:.0f}" if d["mid_cycle"] else "",
                 "uncapped_base_oe": f"{plain[0]:.0f}" if plain else "",
                 "base_oe_used": f"{base[0]:.0f}" if base else "",
+                "span_ok": "yes" if d["span_ok"] else "NO - shorter than a cycle",
                 "cap_bound": ("yes" if (base and plain and base[0] < plain[0] * 0.999)
                               else "no" if (base and plain) else "unevaluable"),
             })
@@ -289,9 +290,10 @@ def rank() -> None:
             w = csv.DictWriter(fh, fieldnames=list(cyc_rows[0]))
             w.writeheader(); w.writerows(cyc_rows)
         bound = sum(1 for x in cyc_rows if x["cap_bound"] == "yes")
-        short = sum(1 for x in cyc_rows if isinstance(x["span"], int) and x["span"] < 10)
+        short = sum(1 for x in cyc_rows if x["span_ok"] != "yes")
         print(f"\n  mid-cycle cap: bound on {bound} of {len(cyc_rows)} cyclicals; "
-              f"{short} computed over a span shorter than 10 years "
+              f"{short} computed over a span shorter than {config.MID_CYCLE_MIN_SPAN} "
+              f"years, which cannot contain a cycle "
               f"-> {OUT/'cyclical_normalisation.csv'}")
 
     # The tracking record: append-only, written on the day, never edited.

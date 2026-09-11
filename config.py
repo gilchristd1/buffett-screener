@@ -115,6 +115,28 @@ C9_CYCLICAL_MODULES = {"industrials", "energy"}
 # mid-cycle owner earnings, so a boom cannot be mistaken for a run-rate.
 CYCLICAL_MODULES = C9_CYCLICAL_MODULES
 C9_MIN_OPERATING_INCOME_RATIO_CYCLICAL = 0.70
+
+# --- §M2 mid-cycle normalisation: the window, and what to do when it is short.
+#
+# Run 12 settled an open question with evidence rather than argument. The cap
+# BOUND on 11 of 14 cyclicals, so the mechanism works. It did not bind on Toll
+# Brothers, the name it was built for, and the diagnostic says why: 9 margin
+# years spanning 2017-2025. There is no housing downturn anywhere in that
+# window. The median of an expansion is an expansion.
+#
+# §1 already requires 15 years of history for cyclicals, and §M2 already
+# measures their growth peak-to-peak over 15 years, precisely so a full cycle
+# is in view. The mid-cycle calculation was looking back 10 and contradicting
+# both. It now matches them.
+MID_CYCLE_LOOKBACK_YEARS = 15
+# A count is not a window. Ten margins drawn from 2016-2025 is one expansion;
+# the span is what says whether a cycle is in view at all.
+MID_CYCLE_MIN_SPAN = 12
+# FALSE on first release, exactly as C9_UNVERIFIED_BLOCKS was, and for the same
+# reason: turning a new exclusion on before the distribution has been seen is
+# how a screen quietly empties. Run 13 reports the spans; this flips once the
+# count justifies it, and §0's third principle says which way it should flip.
+MID_CYCLE_SHORT_SPAN_BLOCKS = False
 C9_ENABLED = True
 # What to do when a company has no parseable quarterly filings.
 #

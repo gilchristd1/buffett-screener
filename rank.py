@@ -232,7 +232,15 @@ def normalised_owner_earnings(s: secdata.AnnualSeries,
     base = statistics.median(oes) * factor
 
     if sector in config.CYCLICAL_MODULES:
-        mid = M.mid_cycle_owner_earnings(s)
+        d = M.mid_cycle_detail(s)
+        mid = d["mid_cycle"]
+        # A cap computed over half a cycle is not a cap. Run 12 measured this:
+        # Toll Brothers' nine margin years ran 2017-2025, an unbroken housing
+        # expansion, so the median it produced was a boom median and the cap
+        # sat above the unnormalised base and did nothing. Reporting only, for
+        # now — see config.MID_CYCLE_SHORT_SPAN_BLOCKS.
+        if not d["span_ok"] and config.MID_CYCLE_SHORT_SPAN_BLOCKS:
+            return None
         if mid is not None and mid > 0:
             base = min(base, mid)
     return base, factor
